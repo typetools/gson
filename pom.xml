@@ -82,8 +82,11 @@
                   <version>9</version>
                 </jdkToolchain>
                 <includes>
+                  <include>**/gson/Gson.java</include>
+                  <include>**/gson/JsonObject.java</include>
                   <include>**/gson/GsonBuilder.java</include>
-                  <include>module-info.java</include>
+                  <include>**/gson/TypeAdapter.java</include>
+		  <include>module-info.java</include>
                 </includes>
               </configuration>
             </execution>
@@ -94,7 +97,7 @@
               </goals>
               <configuration>
                 <excludes>
-                  <exclude>module-info.java</exclude>
+			<!--<exclude>module-info.java</exclude>-->
                 </excludes>
               </configuration>
             </execution>

@@ -40,6 +40,7 @@ import static com.google.gson.Gson.DEFAULT_LENIENT;
 import static com.google.gson.Gson.DEFAULT_PRETTY_PRINT;
 import static com.google.gson.Gson.DEFAULT_SERIALIZE_NULLS;
 import static com.google.gson.Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * <p>Use this builder to construct a {@link Gson} instance when you need to set configuration
@@ -85,7 +86,7 @@ public final class GsonBuilder {
   /** tree-style hierarchy factories. These come after factories for backwards compatibility. */
   private final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<TypeAdapterFactory>();
   private boolean serializeNulls = DEFAULT_SERIALIZE_NULLS;
-  private String datePattern;
+  private @Nullable String datePattern;
   private int dateStyle = DateFormat.DEFAULT;
   private int timeStyle = DateFormat.DEFAULT;
   private boolean complexMapKeySerialization = DEFAULT_COMPLEX_MAP_KEYS;
@@ -603,7 +604,7 @@ public final class GsonBuilder {
   }
 
   @SuppressWarnings("unchecked")
-  private void addTypeAdaptersForDate(String datePattern, int dateStyle, int timeStyle,
+  private void addTypeAdaptersForDate(@Nullable String datePattern, int dateStyle, int timeStyle,
       List<TypeAdapterFactory> factories) {
     DefaultDateTypeAdapter dateTypeAdapter;
     TypeAdapter<Timestamp> timestampTypeAdapter;

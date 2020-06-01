@@ -30,8 +30,11 @@
         <version>3.8.1</version>
         <configuration>
           <includes>
-            <include>**/gson/GsonBuilder.java</include>
-            <include>module-info.java</include>
+            <include>**/gson/Gson.java</include>
+                  <include>**/gson/JsonObject.java</include>
+                  <include>**/gson/GsonBuilder.java</include>
+                  <include>**/gson/TypeAdapter.java</include>
+	    <include>module-info.java</include>
           </includes>
           <release>11</release>
           <compilerArguments>
