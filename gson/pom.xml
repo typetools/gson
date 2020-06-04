@@ -29,13 +29,10 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <includes>
-            <include>**/gson/Gson.java</include>
-                  <include>**/gson/JsonObject.java</include>
-                  <include>**/gson/GsonBuilder.java</include>
-                  <include>**/gson/TypeAdapter.java</include>
+		<includes>
+            <include>**/gson/*.java</include>
 	    <include>module-info.java</include>
-          </includes>
+    </includes>
           <release>11</release>
           <compilerArguments>
             <Xmaxerrs>10000</Xmaxerrs>
