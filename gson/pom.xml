@@ -31,6 +31,8 @@
         <configuration>
 		<includes>
             <include>**/gson/*.java</include>
+	    <include>**/gson/reflect/*.java</include>
+	    <include>**/gson/stream/*.java</include>
 	    <include>module-info.java</include>
     </includes>
           <release>11</release>

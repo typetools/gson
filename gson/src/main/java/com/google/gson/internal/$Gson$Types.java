@@ -30,6 +30,7 @@ import java.util.*;
 import static com.google.gson.internal.$Gson$Preconditions.checkArgument;
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Static methods for working with types.
  *
@@ -50,7 +51,7 @@ public final class $Gson$Types {
    * @return a {@link java.io.Serializable serializable} parameterized type.
    */
   public static ParameterizedType newParameterizedTypeWithOwner(
-      Type ownerType, Type rawType, Type... typeArguments) {
+      @Nullable Type ownerType, Type rawType, Type... typeArguments) {
     return new ParameterizedTypeImpl(ownerType, rawType, typeArguments);
   }
 

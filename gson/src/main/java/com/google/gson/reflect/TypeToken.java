@@ -25,6 +25,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Represents a generic type {@code T}. Java doesn't yet provide a way to
  * represent generic types, so this class does. Forces clients to create a
@@ -68,7 +69,7 @@ public class TypeToken<T> {
    * Unsafe. Constructs a type literal manually.
    */
   @SuppressWarnings("unchecked")
-  TypeToken(Type type) {
+  TypeToken(@Nullable Type type) {
     this.type = $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(type));
     this.rawType = (Class<? super T>) $Gson$Types.getRawType(this.type);
     this.hashCode = this.type.hashCode();
@@ -78,13 +79,16 @@ public class TypeToken<T> {
    * Returns the type from super class's type parameter in {@link $Gson$Types#canonicalize
    * canonical form}.
    */
+   /*superclass #1 is not ensured to be non null,
+     possible issue in gson. #2 statement maybe a dereference of nullable*/
+   @SuppressWarnings("dereference.of.nullable")
   static Type getSuperclassTypeParameter(Class<?> subclass) {
-    Type superclass = subclass.getGenericSuperclass();
+    Type superclass = subclass.getGenericSuperclass(); //#1
     if (superclass instanceof Class) {
       throw new RuntimeException("Missing type parameter.");
     }
     ParameterizedType parameterized = (ParameterizedType) superclass;
-    return $Gson$Types.canonicalize(parameterized.getActualTypeArguments()[0]);
+    return $Gson$Types.canonicalize(parameterized.getActualTypeArguments()[0]); //#2
   }
 
   /**
@@ -119,7 +123,7 @@ public class TypeToken<T> {
    *     with wildcards.
    */
   @Deprecated
-  public boolean isAssignableFrom(Type from) {
+  public boolean isAssignableFrom(@Nullable Type from) {
     if (from == null) {
       return false;
     }
@@ -182,7 +186,10 @@ public class TypeToken<T> {
    * Private recursive helper function to actually do the type-safe checking
    * of assignability.
    */
-  private static boolean isAssignableFrom(Type from, ParameterizedType to,
+   /*arg sent to typeVarMap.put() #6 is ensured to be non null,
+   by statements #3 #4 #5*/
+   @SuppressWarnings("argument.type.incompatible")
+  private static boolean isAssignableFrom(@Nullable Type from, ParameterizedType to,
       Map<String, Type> typeVarMap) {
 
     if (from == null) {
@@ -205,13 +212,13 @@ public class TypeToken<T> {
       Type[] tArgs = ptype.getActualTypeArguments();
       TypeVariable<?>[] tParams = clazz.getTypeParameters();
       for (int i = 0; i < tArgs.length; i++) {
-        Type arg = tArgs[i];
+        Type arg = tArgs[i]; //#3
         TypeVariable<?> var = tParams[i];
-        while (arg instanceof TypeVariable<?>) {
+        while (arg instanceof TypeVariable<?>) { //#4
           TypeVariable<?> v = (TypeVariable<?>) arg;
-          arg = typeVarMap.get(v.getName());
+          arg = typeVarMap.get(v.getName()); //#5
         }
-        typeVarMap.put(var.getName(), arg);
+        typeVarMap.put(var.getName(), arg); //#6
       }
 
       // check if they are equivalent under our current mapping.
@@ -280,7 +287,7 @@ public class TypeToken<T> {
     return this.hashCode;
   }
 
-  @Override public final boolean equals(Object o) {
+  @Override public final boolean equals(@Nullable Object o) {
     return o instanceof TypeToken<?>
         && $Gson$Types.equals(type, ((TypeToken<?>) o).type);
   }

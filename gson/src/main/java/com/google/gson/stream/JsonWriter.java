@@ -30,6 +30,8 @@ import static com.google.gson.stream.JsonScope.NONEMPTY_ARRAY;
 import static com.google.gson.stream.JsonScope.NONEMPTY_DOCUMENT;
 import static com.google.gson.stream.JsonScope.NONEMPTY_OBJECT;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 /**
  * Writes a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
  * encoded value to a stream, one token at a time. The stream includes both
@@ -128,6 +130,7 @@ import static com.google.gson.stream.JsonScope.NONEMPTY_OBJECT;
  * @author Jesse Wilson
  * @since 1.6
  */
+ @SuppressWarnings("method.invocation.invalid")
 public class JsonWriter implements Closeable, Flushable {
 
   /*
@@ -167,6 +170,8 @@ public class JsonWriter implements Closeable, Flushable {
 
   private int[] stack = new int[32];
   private int stackSize = 0;
+  /*Possible defect in Gson code, it is dangerous to call instance method
+   * from an instance initializer block since the object is under construction*/
   {
     push(EMPTY_DOCUMENT);
   }
@@ -175,7 +180,7 @@ public class JsonWriter implements Closeable, Flushable {
    * A string containing a full set of spaces for a single level of
    * indentation, or null for no pretty printing.
    */
-  private String indent;
+  private @Nullable String indent;
 
   /**
    * The name/value separator; either ":" or ": ".
@@ -186,7 +191,7 @@ public class JsonWriter implements Closeable, Flushable {
 
   private boolean htmlSafe;
 
-  private String deferredName;
+  private @Nullable String deferredName;
 
   private boolean serializeNulls = true;
 
@@ -394,11 +399,13 @@ public class JsonWriter implements Closeable, Flushable {
     deferredName = name;
     return this;
   }
-
+  /*if statement #1 confirms deferredName is not null
+  before passing it to string() #2*/
+  @SuppressWarnings("argument.type.incompatible")
   private void writeDeferredName() throws IOException {
-    if (deferredName != null) {
+    if (deferredName != null) { //#1
       beforeName();
-      string(deferredName);
+      string(deferredName); //#2
       deferredName = null;
     }
   }
@@ -592,14 +599,16 @@ public class JsonWriter implements Closeable, Flushable {
     out.write('\"');
   }
 
+  /*if #3 ensures indent is not null before passing it to out.write() #4*/
+  @SuppressWarnings("argument.type.incompatible")
   private void newline() throws IOException {
-    if (indent == null) {
+    if (indent == null) { //#3
       return;
     }
 
     out.write('\n');
     for (int i = 1, size = stackSize; i < size; i++) {
-      out.write(indent);
+      out.write(indent); //#4
     }
   }
 

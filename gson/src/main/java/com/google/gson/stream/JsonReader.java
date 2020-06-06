@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Reads a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
  * encoded value as a stream of tokens. This stream includes both literal
@@ -260,7 +261,7 @@ public class JsonReader implements Closeable {
    * This is populated before a numeric value is parsed and used if that parsing
    * fails.
    */
-  private String peekedString;
+  private @Nullable String peekedString;
 
   /*
    * The nesting stack. Using a manual array rather than an ArrayList saves 20%.
@@ -279,7 +280,7 @@ public class JsonReader implements Closeable {
    * that array. Otherwise the value is undefined, and we take advantage of that
    * by incrementing pathIndices when doing so isn't useful.
    */
-  private String[] pathNames = new String[32];
+  private @Nullable String[] pathNames = new String[32];
   private int[] pathIndices = new int[32];
 
   /**
@@ -800,6 +801,10 @@ public class JsonReader implements Closeable {
    * @throws IllegalStateException if the next token is not a string or if
    *     this reader is closed.
    */
+   /*According to the documentation when PEEKED_BUFFERED is returned by doPeek(),
+    *  string is stored in `peekedString`#5. `result` in all other cases is assigned to
+    *  non null values before returning #6*/
+  @SuppressWarnings("return.type.incompatible")
   public String nextString() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
@@ -813,7 +818,7 @@ public class JsonReader implements Closeable {
     } else if (p == PEEKED_DOUBLE_QUOTED) {
       result = nextQuotedValue('"');
     } else if (p == PEEKED_BUFFERED) {
-      result = peekedString;
+      result = peekedString; //#5
       peekedString = null;
     } else if (p == PEEKED_LONG) {
       result = Long.toString(peekedLong);
@@ -825,7 +830,7 @@ public class JsonReader implements Closeable {
     }
     peeked = PEEKED_NONE;
     pathIndices[stackSize - 1]++;
-    return result;
+    return result; //#6
   }
 
   /**
@@ -904,7 +909,10 @@ public class JsonReader implements Closeable {
       throw new IllegalStateException("Expected a double but was " + peek() + locationString());
     }
 
-    peeked = PEEKED_BUFFERED;
+    peeked = PEEKED_BUFFERED; //#7
+    /*Acc to documentation when peeked is PEEKED_BUFFERED #7, peekedString contains a string,
+    therefore peekedString sent to Double.parseDouble() is non null and safe*/
+    @SuppressWarnings("argument.type.incompatible")
     double result = Double.parseDouble(peekedString); // don't catch this NumberFormatException.
     if (!lenient && (Double.isNaN(result) || Double.isInfinite(result))) {
       throw new MalformedJsonException(
@@ -1085,7 +1093,7 @@ public class JsonReader implements Closeable {
         break;
       }
     }
-   
+
     String result = (null == builder) ? new String(buffer, pos, i) : builder.append(buffer, pos, i).toString();
     pos += i;
     return result;
@@ -1546,7 +1554,7 @@ public class JsonReader implements Closeable {
     case '\'':
     case '"':
     case '\\':
-    case '/':	
+    case '/':
     	return escaped;
     default:
     	// throw error when none of the above cases are matched

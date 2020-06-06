@@ -82,7 +82,9 @@
                   <version>9</version>
                 </jdkToolchain>
 		<includes>
-                  <include>**/gson/*.java</include>
+			<include>**/gson/*.java</include>
+			<include>**/gson/stream/*.java</include>
+			<include>**/gson/reflect/*.java</include>
 		  <include>module-info.java</include>
 	  </includes>
               </configuration>
