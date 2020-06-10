@@ -35,7 +35,7 @@ public final class $Gson$Preconditions {
     throw new UnsupportedOperationException();
   }
 
-  public static <T> T checkNotNull(@Nullable T obj) {
+  public static <T> T checkNotNull(T obj) {
     if (obj == null) {
       throw new NullPointerException();
     }

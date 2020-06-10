@@ -410,14 +410,16 @@ public final class Gson {
         }
         out.endArray();
       }
-      /*in.hasNext() ensures read(in) doesnt return null in #4*/
+      /*in.hasNext() ensures read(in) doesnt return null in #4
+       * as read(in) doesn't return null, `value` would be a non null value, 
+       * therefore value added to list is non null in #5 */
       @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
       @Override public AtomicLongArray read(JsonReader in) throws IOException {
         List<Long> list = new ArrayList<Long>();
         in.beginArray();
         while (in.hasNext()) { //#4
             long value = longAdapter.read(in).longValue();
-            list.add(value);
+            list.add(value); //#5
         }
         in.endArray();
         int length = list.size();
@@ -899,7 +901,7 @@ public final class Gson {
    * @since 1.2
    */
   @SuppressWarnings("unchecked")
-  public <T> T fromJson(Reader json, Type typeOfT) throws JsonIOException, JsonSyntaxException {
+  public @Nullable <T> T fromJson(Reader json, Type typeOfT) throws JsonIOException, JsonSyntaxException {
     JsonReader jsonReader = newJsonReader(json);
     T object = (T) fromJson(jsonReader, typeOfT);
     assertFullConsumption(object, jsonReader);

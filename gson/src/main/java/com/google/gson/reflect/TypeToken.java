@@ -69,7 +69,7 @@ public class TypeToken<T> {
    * Unsafe. Constructs a type literal manually.
    */
   @SuppressWarnings("unchecked")
-  TypeToken(@Nullable Type type) {
+  TypeToken(Type type) {
     this.type = $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(type));
     this.rawType = (Class<? super T>) $Gson$Types.getRawType(this.type);
     this.hashCode = this.type.hashCode();
@@ -79,8 +79,8 @@ public class TypeToken<T> {
    * Returns the type from super class's type parameter in {@link $Gson$Types#canonicalize
    * canonical form}.
    */
-   /*superclass #1 is not ensured to be non null,
-     possible issue in gson. #2 statement maybe a dereference of nullable*/
+   /*method is package private and called with a non null subclass by the developers,
+    * therefore superclass #1 is non null and #2 statement is safe*/
    @SuppressWarnings("dereference.of.nullable")
   static Type getSuperclassTypeParameter(Class<?> subclass) {
     Type superclass = subclass.getGenericSuperclass(); //#1
@@ -186,8 +186,12 @@ public class TypeToken<T> {
    * Private recursive helper function to actually do the type-safe checking
    * of assignability.
    */
-   /*arg sent to typeVarMap.put() #6 is ensured to be non null,
-   by statements #3 #4 #5*/
+   /*arg sent to typeVarMap.put() #6 is ensured to be 
+    * non null by statements #3 #4 #5
+    * #3 assigns a non-null value to `arg`, #4 is a while loop
+    * inside which arg is assigned to another non-null value #5
+    * if it doesn't enter #4, arg will have the value from #3, 
+    * therefore by the time arg reaches #6 it is ensured to be non null */
    @SuppressWarnings("argument.type.incompatible")
   private static boolean isAssignableFrom(@Nullable Type from, ParameterizedType to,
       Map<String, Type> typeVarMap) {

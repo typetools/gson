@@ -802,8 +802,10 @@ public class JsonReader implements Closeable {
    *     this reader is closed.
    */
    /*According to the documentation when PEEKED_BUFFERED is returned by doPeek(),
-    *  string is stored in `peekedString`#5. `result` in all other cases is assigned to
-    *  non null values before returning #6*/
+    * string is stored in `peekedString`, therefore `result` is non-null #5. 
+    * `result` in all other cases is assigned evidently to
+    * non null values before returning #6. The function returns non-null 
+    * and the return type is compatible*/
   @SuppressWarnings("return.type.incompatible")
   public String nextString() throws IOException {
     int p = peeked;
@@ -1553,7 +1555,7 @@ public class JsonReader implements Closeable {
     case '\'':
     case '"':
     case '\\':
-    case '/':
+    case '/': 
     	return escaped;
     default:
     	// throw error when none of the above cases are matched

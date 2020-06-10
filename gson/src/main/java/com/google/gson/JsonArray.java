@@ -41,6 +41,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public JsonArray() {
     elements = new ArrayList<JsonElement>();
   }
+
   public JsonArray(int capacity) {
     elements = new ArrayList<JsonElement>(capacity);
   }
@@ -172,6 +173,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public int size() {
     return elements.size();
   }
+
   /**
    * Returns true if the array is empty
    *
