@@ -1095,7 +1095,7 @@ public class JsonReader implements Closeable {
         break;
       }
     }
-
+   
     String result = (null == builder) ? new String(buffer, pos, i) : builder.append(buffer, pos, i).toString();
     pos += i;
     return result;
@@ -1556,7 +1556,7 @@ public class JsonReader implements Closeable {
     case '\'':
     case '"':
     case '\\':
-    case '/':	 
+    case '/': 
     	return escaped;
     default:
     	// throw error when none of the above cases are matched

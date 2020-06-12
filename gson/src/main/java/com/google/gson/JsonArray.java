@@ -173,7 +173,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public int size() {
     return elements.size();
   }
-
+  
   /**
    * Returns true if the array is empty
    *
