@@ -31,6 +31,7 @@ import org.checkerframework.framework.qual.CFComment;
  */
 public abstract class UnsafeAllocator {
   public abstract <T> T newInstance(Class<T> c) throws Exception;
+
   @CFComment({"possible missing annotation in jdk for class Field, method get as the doc says it can take null argument #1",
   "class Method, function invoke is annotated to receive non-null args but CFComment says it might permit null #2"})
   @SuppressWarnings({"nullness:argument.type.incompatible","unboxing.of.nullable"})

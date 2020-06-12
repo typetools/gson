@@ -532,6 +532,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     public K getKey() {
       return key;
     }
+
     /*constructor does not initialize value
     therefore getValue might return null*/
     @SuppressWarnings("nullness:override.return.invalid")
