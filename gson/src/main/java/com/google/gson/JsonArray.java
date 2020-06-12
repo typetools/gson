@@ -45,7 +45,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public JsonArray(int capacity) {
     elements = new ArrayList<JsonElement>(capacity);
   }
-  
+
   /**
    * Creates a deep copy of this element and all its children
    * @since 2.8.2
