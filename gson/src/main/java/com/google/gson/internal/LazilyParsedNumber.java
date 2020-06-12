@@ -17,6 +17,7 @@ package com.google.gson.internal;
 
 import java.io.ObjectStreamException;
 import java.math.BigDecimal;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * This class holds a number value that is lazily converted to a specific number type
@@ -83,7 +84,7 @@ public final class LazilyParsedNumber extends Number {
   }
 
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (this == obj) {
       return true;
     }

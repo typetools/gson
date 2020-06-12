@@ -42,6 +42,7 @@ import com.google.gson.InstanceCreator;
 import com.google.gson.JsonIOException;
 import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Returns a function that can construct an instance of a requested type.
@@ -96,18 +97,20 @@ public final class ConstructorConstructor {
     return newUnsafeAllocator(type, rawType);
   }
 
-  private <T> ObjectConstructor<T> newDefaultConstructor(Class<? super T> rawType) {
+  private @Nullable <T> ObjectConstructor<T> newDefaultConstructor(Class<? super T> rawType) {
     try {
       final Constructor<? super T> constructor = rawType.getDeclaredConstructor();
       if (!constructor.isAccessible()) {
         accessor.makeAccessible(constructor);
       }
       return new ObjectConstructor<T>() {
-        @SuppressWarnings("unchecked") // T is the same raw type as is requested
+        /*Probable missing annotation in java.lang.reflect.Constructor.java
+        #1 sends null to a variable length argument*/
+        @SuppressWarnings({"unchecked","nullness:argument.type.incompatible"}) // T is the same raw type as is requested
         @Override public T construct() {
           try {
             Object[] args = null;
-            return (T) constructor.newInstance(args);
+            return (T) constructor.newInstance(args); //#1
           } catch (InstantiationException e) {
             // TODO: JsonParseException ?
             throw new RuntimeException("Failed to invoke " + constructor + " with no args", e);
@@ -131,7 +134,7 @@ public final class ConstructorConstructor {
    * subtypes.
    */
   @SuppressWarnings("unchecked") // use runtime checks to guarantee that 'T' is what it is
-  private <T> ObjectConstructor<T> newDefaultImplementationConstructor(
+  private @Nullable <T> ObjectConstructor<T> newDefaultImplementationConstructor(
       final Type type, Class<? super T> rawType) {
     if (Collection.class.isAssignableFrom(rawType)) {
       if (SortedSet.class.isAssignableFrom(rawType)) {

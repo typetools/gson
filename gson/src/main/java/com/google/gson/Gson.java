@@ -410,10 +410,8 @@ public final class Gson {
         }
         out.endArray();
       }
-      /*in.hasNext() ensures read(in) doesnt return null in #4
-       * as read(in) doesn't return null, `value` would be a non null value, 
-       * therefore value added to list is non null in #5 */
-      @SuppressWarnings({"dereference.of.nullable", "argument.type.incompatible"})
+      /*in.hasNext() ensures read(in) doesnt return null in #4*/
+      @SuppressWarnings({"dereference.of.nullable"})
       @Override public AtomicLongArray read(JsonReader in) throws IOException {
         List<Long> list = new ArrayList<Long>();
         in.beginArray();

@@ -21,6 +21,7 @@ import java.io.ObjectStreamClass;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import org.checkerframework.framework.qual.CFComment;
 
 /**
  * Do sneaky things to allocate objects without invoking their constructors.
@@ -30,7 +31,9 @@ import java.lang.reflect.Modifier;
  */
 public abstract class UnsafeAllocator {
   public abstract <T> T newInstance(Class<T> c) throws Exception;
-
+  @CFComment({"possible missing annotation in jdk for class Field, method get as the doc says it can take null argument #1",
+  "class Method, function invoke is annotated to receive non-null args but CFComment says it might permit null #2"})
+  @SuppressWarnings({"nullness:argument.type.incompatible","unboxing.of.nullable"})
   public static UnsafeAllocator create() {
     // try JVM
     // public class Unsafe {
@@ -40,7 +43,7 @@ public abstract class UnsafeAllocator {
       Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
       Field f = unsafeClass.getDeclaredField("theUnsafe");
       f.setAccessible(true);
-      final Object unsafe = f.get(null);
+      final Object unsafe = f.get(null); //#1
       final Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
       return new UnsafeAllocator() {
         @Override
@@ -62,7 +65,7 @@ public abstract class UnsafeAllocator {
       Method getConstructorId = ObjectStreamClass.class
           .getDeclaredMethod("getConstructorId", Class.class);
       getConstructorId.setAccessible(true);
-      final int constructorId = (Integer) getConstructorId.invoke(null, Object.class);
+      final int constructorId = (Integer) getConstructorId.invoke(null, Object.class); //#2
       final Method newInstance = ObjectStreamClass.class
           .getDeclaredMethod("newInstance", Class.class, int.class);
       newInstance.setAccessible(true);

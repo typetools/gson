@@ -40,12 +40,14 @@ public final class Streams {
   /**
    * Takes a reader in any state and returns the next value as a JsonElement.
    */
+   //reader.peek() #1 ensures read in #2 would not return null
+  @SuppressWarnings("nullness:return.type.incompatible")
   public static JsonElement parse(JsonReader reader) throws JsonParseException {
     boolean isEmpty = true;
     try {
-      reader.peek();
+      reader.peek(); //#1
       isEmpty = false;
-      return TypeAdapters.JSON_ELEMENT.read(reader);
+      return TypeAdapters.JSON_ELEMENT.read(reader); //#2
     } catch (EOFException e) {
       /*
        * For compatibility with JSON 1.5 and earlier, we return a JsonNull for
@@ -103,6 +105,8 @@ public final class Streams {
     /**
      * A mutable char sequence pointing at a single char[].
      */
+    /*Code is dangerous as functions can be called without initializing chars*/
+    @SuppressWarnings("initialization.fields.uninitialized")
     static class CurrentWrite implements CharSequence {
       char[] chars;
       public int length() {

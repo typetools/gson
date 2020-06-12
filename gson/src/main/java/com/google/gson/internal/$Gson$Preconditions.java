@@ -16,7 +16,6 @@
 
 package com.google.gson.internal;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * A simple utility class used to check method Preconditions.
  *

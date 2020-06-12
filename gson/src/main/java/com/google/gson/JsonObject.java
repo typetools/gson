@@ -21,6 +21,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import java.util.Map;
 import java.util.Set;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.KeyFor;
 
 /**
  * A class representing an object type in Json. An object consists of name-value pairs where names
@@ -66,7 +67,7 @@ public final class JsonObject extends JsonElement {
    * @return the {@link JsonElement} object that is being removed.
    * @since 1.3
    */
-  public JsonElement remove(String property) {
+  public @Nullable JsonElement remove(String property) {
     return members.remove(property);
   }
 
@@ -120,7 +121,7 @@ public final class JsonObject extends JsonElement {
    *
    * @return a set of members of this object.
    */
-  public Set<Map.Entry<String, JsonElement>> entrySet() {
+  public Set<Map.Entry<@KeyFor("this.members") String, JsonElement>> entrySet() {
     return members.entrySet();
   }
 
@@ -130,7 +131,7 @@ public final class JsonObject extends JsonElement {
    * @return a set of member keys as Strings
    * @since 2.8.1
    */
-  public Set<String> keySet() {
+  public Set<@KeyFor("this.members") String> keySet() {
     return members.keySet();
   }
 
@@ -159,7 +160,7 @@ public final class JsonObject extends JsonElement {
    * @param memberName name of the member that is being requested.
    * @return the member matching the name. Null if no such member exists.
    */
-  public JsonElement get(String memberName) {
+  public @Nullable JsonElement get(String memberName) {
     return members.get(memberName);
   }
 
@@ -169,7 +170,7 @@ public final class JsonObject extends JsonElement {
    * @param memberName name of the member being requested.
    * @return the JsonPrimitive corresponding to the specified member.
    */
-  public JsonPrimitive getAsJsonPrimitive(String memberName) {
+  public @Nullable JsonPrimitive getAsJsonPrimitive(String memberName) {
     return (JsonPrimitive) members.get(memberName);
   }
 
@@ -179,7 +180,7 @@ public final class JsonObject extends JsonElement {
    * @param memberName name of the member being requested.
    * @return the JsonArray corresponding to the specified member.
    */
-  public JsonArray getAsJsonArray(String memberName) {
+  public @Nullable JsonArray getAsJsonArray(String memberName) {
     return (JsonArray) members.get(memberName);
   }
 
@@ -189,7 +190,7 @@ public final class JsonObject extends JsonElement {
    * @param memberName name of the member being requested.
    * @return the JsonObject corresponding to the specified member.
    */
-  public JsonObject getAsJsonObject(String memberName) {
+  public @Nullable JsonObject getAsJsonObject(String memberName) {
     return (JsonObject) members.get(memberName);
   }
 
