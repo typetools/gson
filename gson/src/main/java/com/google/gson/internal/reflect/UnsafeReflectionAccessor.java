@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import com.google.gson.JsonIOException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * An implementation of {@link ReflectionAccessor} based on {@link Unsafe}.
@@ -27,12 +28,13 @@ import com.google.gson.JsonIOException;
  * NOTE: This implementation is designed for Java 9. Although it should work with earlier Java releases, it is better to
  * use {@link PreJava9ReflectionAccessor} for them.
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+/*static block was not used to initialize unsafeClass
+ * but was initialized using getUnsafeInstance method:*/
+@SuppressWarnings({"unchecked", "rawtypes","initialization.static.fields.uninitialized"})
 final class UnsafeReflectionAccessor extends ReflectionAccessor {
-
   private static Class unsafeClass;
-  private final Object theUnsafe = getUnsafeInstance();
-  private final Field overrideField = getOverrideField();
+  private @Nullable final Object theUnsafe = getUnsafeInstance();
+  private @Nullable final Field overrideField = getOverrideField();
 
   /** {@inheritDoc} */
   @Override
@@ -55,7 +57,9 @@ final class UnsafeReflectionAccessor extends ReflectionAccessor {
     if (theUnsafe != null && overrideField != null) {
       try {
         Method method = unsafeClass.getMethod("objectFieldOffset", Field.class);
-        long overrideOffset = (Long) method.invoke(theUnsafe, overrideField);  // long overrideOffset = theUnsafe.objectFieldOffset(overrideField);
+	//getMethod returns a non null Method or throws an Exception, therefore `method` cannot be null in #2
+	@SuppressWarnings("unboxing.of.nullable")
+        long overrideOffset = (Long) method.invoke(theUnsafe, overrideField);  // long overrideOffset = theUnsafe.objectFieldOffset(overrideField); #2
         Method putBooleanMethod = unsafeClass.getMethod("putBoolean",  Object.class, long.class, boolean.class);
         putBooleanMethod.invoke(theUnsafe, ao, overrideOffset, true); // theUnsafe.putBoolean(ao, overrideOffset, true);
         return true;
@@ -65,18 +69,20 @@ final class UnsafeReflectionAccessor extends ReflectionAccessor {
     return false;
   }
 
-  private static Object getUnsafeInstance() {
+  //null should not be sent to get method #1
+  @SuppressWarnings("argument.type.incompatible")
+  private static @Nullable Object getUnsafeInstance() {
     try {
       unsafeClass = Class.forName("sun.misc.Unsafe");
       Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
       unsafeField.setAccessible(true);
-      return unsafeField.get(null);
+      return unsafeField.get(null); //#1
     } catch (Exception e) {
       return null;
     }
   }
 
-  private static Field getOverrideField() {
+  private static @Nullable Field getOverrideField() {
     try {
       return AccessibleObject.class.getDeclaredField("override");
     } catch (NoSuchFieldException e) {

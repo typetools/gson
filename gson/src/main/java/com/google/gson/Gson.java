@@ -529,7 +529,9 @@ public final class Gson {
    *
    * @since 2.2
    */
-  public <T> TypeAdapter<T> getDelegateAdapter(TypeAdapterFactory skipPast, TypeToken<T> type) {
+  // Possible missing annotation in class List method contains(@Nullable Object)
+  @SuppressWarnings("nullness:argument.type.incompatible")
+  public <T> TypeAdapter<T> getDelegateAdapter(@Nullable TypeAdapterFactory skipPast, TypeToken<T> type) {
     // Hack. If the skipPast factory isn't registered, assume the factory is being requested via
     // our @JsonAdapter annotation.
     if (!factories.contains(skipPast)) {

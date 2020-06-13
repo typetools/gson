@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * This writer creates a JsonElement.
@@ -49,7 +50,7 @@ public final class JsonTreeWriter extends JsonWriter {
   private final List<JsonElement> stack = new ArrayList<JsonElement>();
 
   /** The name for the next JSON object value. If non-null, the top of the stack is a JsonObject. */
-  private String pendingName;
+  private @Nullable String pendingName;
 
   /** the JSON element constructed by this writer. */
   private JsonElement product = JsonNull.INSTANCE; // TODO: is this really what we want?;
@@ -72,8 +73,9 @@ public final class JsonTreeWriter extends JsonWriter {
     return stack.get(stack.size() - 1);
   }
 
+  @SuppressWarnings("nullness:argument.type.incompatible")
   private void put(JsonElement value) {
-    if (pendingName != null) {
+    if (pendingName != null) { //#1
       if (!value.isJsonNull() || getSerializeNulls()) {
         JsonObject object = (JsonObject) peek();
         object.add(pendingName, value);
@@ -144,7 +146,7 @@ public final class JsonTreeWriter extends JsonWriter {
     throw new IllegalStateException();
   }
 
-  @Override public JsonWriter value(String value) throws IOException {
+  @Override public JsonWriter value(@Nullable String value) throws IOException {
     if (value == null) {
       return nullValue();
     }

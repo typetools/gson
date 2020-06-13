@@ -36,6 +36,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Adapts maps to either JSON objects or JSON arrays.
@@ -112,7 +113,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
     this.complexMapKeySerialization = complexMapKeySerialization;
   }
 
-  @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+  @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
     Type type = typeToken.getType();
 
     Class<? super T> rawType = typeToken.getRawType();
@@ -157,7 +158,9 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
 
-    @Override public Map<K, V> read(JsonReader in) throws IOException {
+    //INSTANCE in #3 may be null as JsonReaderInternalAccess do not initialize it
+    @SuppressWarnings("dereference.of.nullable")
+    @Override public @Nullable Map<K, V> read(JsonReader in) throws IOException {
       JsonToken peek = in.peek();
       if (peek == JsonToken.NULL) {
         in.nextNull();
@@ -168,10 +171,12 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       if (peek == JsonToken.BEGIN_ARRAY) {
         in.beginArray();
-        while (in.hasNext()) {
+        while (in.hasNext()) { //#1
           in.beginArray(); // entry array
           K key = keyTypeAdapter.read(in);
           V value = valueTypeAdapter.read(in);
+          //#1 checks if there are more tokens to be read therefore key & value are non null
+          @SuppressWarnings("nullness:argument.type.incompatible")
           V replaced = map.put(key, value);
           if (replaced != null) {
             throw new JsonSyntaxException("duplicate key: " + key);
@@ -181,10 +186,12 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         in.endArray();
       } else {
         in.beginObject();
-        while (in.hasNext()) {
-          JsonReaderInternalAccess.INSTANCE.promoteNameToValue(in);
+        while (in.hasNext()) { //#2
+          JsonReaderInternalAccess.INSTANCE.promoteNameToValue(in); //#3
           K key = keyTypeAdapter.read(in);
           V value = valueTypeAdapter.read(in);
+          //#2 checks if there are more tokens to be read therefore key & value are non null
+          @SuppressWarnings("nullness:argument.type.incompatible")
           V replaced = map.put(key, value);
           if (replaced != null) {
             throw new JsonSyntaxException("duplicate key: " + key);

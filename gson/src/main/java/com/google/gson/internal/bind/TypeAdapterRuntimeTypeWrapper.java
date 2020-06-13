@@ -24,6 +24,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   private final Gson context;
@@ -37,7 +38,7 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   }
 
   @Override
-  public T read(JsonReader in) throws IOException {
+  public @Nullable T read(JsonReader in) throws IOException {
     return delegate.read(in);
   }
 
@@ -72,7 +73,7 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   /**
    * Finds a compatible runtime type if it is more specific
    */
-  private Type getRuntimeTypeIfMoreSpecific(Type type, Object value) {
+  private Type getRuntimeTypeIfMoreSpecific(Type type, @Nullable Object value) {
     if (value != null
         && (type == Object.class || type instanceof TypeVariable<?> || type instanceof Class<?>)) {
       type = value.getClass();

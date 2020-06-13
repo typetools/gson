@@ -29,6 +29,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Adapt a homogeneous collection of objects.
@@ -41,7 +42,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
   }
 
   @Override
-  public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+  public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
     Type type = typeToken.getType();
 
     Class<? super T> rawType = typeToken.getRawType();
@@ -70,7 +71,9 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
 
-    @Override public Collection<E> read(JsonReader in) throws IOException {
+    /*#1 ensures that read(in) does not return null #2 and instance sent in #3 is non null*/
+    @SuppressWarnings("nullness:argument.type.incompatible")
+    @Override public @Nullable Collection<E> read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -78,9 +81,9 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
 
       Collection<E> collection = constructor.construct();
       in.beginArray();
-      while (in.hasNext()) {
-        E instance = elementTypeAdapter.read(in);
-        collection.add(instance);
+      while (in.hasNext()) { //#1
+        E instance = elementTypeAdapter.read(in); //#2
+        collection.add(instance); //#3
       }
       in.endArray();
       return collection;

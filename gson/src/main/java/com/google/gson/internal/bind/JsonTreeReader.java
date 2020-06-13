@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Arrays;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * This reader walks the elements of a JsonElement as if it was coming from a
@@ -49,7 +50,7 @@ public final class JsonTreeReader extends JsonReader {
   /*
    * The nesting stack. Using a manual array rather than an ArrayList saves 20%.
    */
-  private Object[] stack = new Object[32];
+  private @Nullable Object[] stack = new Object[32];
   private int stackSize = 0;
 
   /*
@@ -60,7 +61,7 @@ public final class JsonTreeReader extends JsonReader {
    * that array. Otherwise the value is undefined, and we take advantage of that
    * by incrementing pathIndices when doing so isn't useful.
    */
-  private String[] pathNames = new String[32];
+  private @Nullable String[] pathNames = new String[32];
   private int[] pathIndices = new int[32];
 
   public JsonTreeReader(JsonElement element) {
@@ -104,6 +105,7 @@ public final class JsonTreeReader extends JsonReader {
     return token != JsonToken.END_OBJECT && token != JsonToken.END_ARRAY;
   }
 
+  @SuppressWarnings("nullness:argument.type.incompatible")
   @Override public JsonToken peek() throws IOException {
     if (stackSize == 0) {
       return JsonToken.END_DOCUMENT;
@@ -147,12 +149,18 @@ public final class JsonTreeReader extends JsonReader {
     }
   }
 
+  /*stackSize indicates the number of non null elements present in the stack,
+  therefore stack[stackSize-1] #1 is a non null element*/
+  @SuppressWarnings({"return.type.incompatible"})
   private Object peekStack() {
-    return stack[stackSize - 1];
+    return stack[stackSize - 1]; //#1
   }
 
+  /*stackSize indicates the number of non null elements present in the stack,
+  therefore stack[stackSize-1] #8 is a non null element*/
+  @SuppressWarnings({"return.type.incompatible"})
   private Object popStack() {
-    Object result = stack[--stackSize];
+    Object result = stack[--stackSize]; //#8
     stack[stackSize] = null;
     return result;
   }
@@ -164,13 +172,18 @@ public final class JsonTreeReader extends JsonReader {
     }
   }
 
+  /*i.next #5 gives the next object or throws an exception
+  therefore entry is non null and #6 is safe from dereference of nullable,
+  entry.getValue will return non null for a valid entry #7,
+  entry.getKey will return non null value for a valid entry #6, therefore function return type is non null*/
+  @SuppressWarnings({"dereference.of.nullable","argument.type.incompatible","return.type.incompatible"})
   @Override public String nextName() throws IOException {
     expect(JsonToken.NAME);
     Iterator<?> i = (Iterator<?>) peekStack();
-    Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next();
-    String result = (String) entry.getKey();
+    Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next(); //#5
+    String result = (String) entry.getKey(); //#6
     pathNames[stackSize - 1] = result;
-    push(entry.getValue());
+    push(entry.getValue()); //#7
     return result;
   }
 
@@ -273,12 +286,16 @@ public final class JsonTreeReader extends JsonReader {
     return getClass().getSimpleName();
   }
 
+  /*i.next #2 gives the next object or throws an exception
+  therefore entry is non null and #3 safe from dereference of nullable,
+  entry.getValue and entry.getKey #3 #4 are non null for a valid entry*/
+  @SuppressWarnings({"dereference.of.nullable","argument.type.incompatible"})
   public void promoteNameToValue() throws IOException {
     expect(JsonToken.NAME);
     Iterator<?> i = (Iterator<?>) peekStack();
-    Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next();
-    push(entry.getValue());
-    push(new JsonPrimitive((String) entry.getKey()));
+    Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next(); //#2
+    push(entry.getValue()); //#3
+    push(new JsonPrimitive((String) entry.getKey())); //#4
   }
 
   private void push(Object newTop) {
