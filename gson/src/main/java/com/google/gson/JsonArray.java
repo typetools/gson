@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 /**
  * A class representing an array type in Json. An array is a list of {@link JsonElement}s each of
  * which can be of a different type. This is an ordered list, meaning that the order in which
@@ -41,7 +39,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public JsonArray() {
     elements = new ArrayList<JsonElement>();
   }
-
+  
   public JsonArray(int capacity) {
     elements = new ArrayList<JsonElement>(capacity);
   }
@@ -173,7 +171,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public int size() {
     return elements.size();
   }
-
+  
   /**
    * Returns true if the array is empty
    *
@@ -384,7 +382,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   }
 
   @Override
-  public boolean equals(@Nullable Object o) {
+  public boolean equals(Object o) {
     return (o == this) || (o instanceof JsonArray && ((JsonArray) o).elements.equals(elements));
   }
 

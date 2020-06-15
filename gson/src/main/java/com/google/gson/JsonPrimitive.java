@@ -22,7 +22,6 @@ import java.math.BigInteger;
 
 import com.google.gson.internal.LazilyParsedNumber;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * A class representing a Json primitive value. A primitive value
  * is either a String, a Java primitive, or a Java primitive
@@ -257,7 +256,7 @@ public final class JsonPrimitive extends JsonElement {
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(Object obj) {
     if (this == obj) {
       return true;
     }

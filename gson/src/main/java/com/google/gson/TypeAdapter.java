@@ -26,7 +26,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import org.checkerframework.checker.nullness.qual.*;
 
 /**
  * Converts Java objects to and from JSON.
@@ -192,7 +191,7 @@ public abstract class TypeAdapter<T> {
           TypeAdapter.this.write(out, value);
         }
       }
-      @Override public @Nullable T read(JsonReader reader) throws IOException {
+      @Override public T read(JsonReader reader) throws IOException {
         if (reader.peek() == JsonToken.NULL) {
           reader.nextNull();
           return null;
@@ -245,7 +244,7 @@ public abstract class TypeAdapter<T> {
    *
    * @return the converted Java object. May be null.
    */
-  public abstract @Nullable T read(JsonReader in) throws IOException;
+  public abstract T read(JsonReader in) throws IOException;
 
   /**
    * Converts the JSON document in {@code in} to a Java object. Unlike Gson's
@@ -256,7 +255,7 @@ public abstract class TypeAdapter<T> {
    * @return the converted Java object. May be null.
    * @since 2.2
    */
-  public final @Nullable T fromJson(Reader in) throws IOException {
+  public final T fromJson(Reader in) throws IOException {
     JsonReader reader = new JsonReader(in);
     return read(reader);
   }
@@ -270,7 +269,7 @@ public abstract class TypeAdapter<T> {
    * @return the converted Java object. May be null.
    * @since 2.2
    */
-  public final @Nullable T fromJson(String json) throws IOException {
+  public final T fromJson(String json) throws IOException {
     return fromJson(new StringReader(json));
   }
 
@@ -280,7 +279,7 @@ public abstract class TypeAdapter<T> {
    * @param jsonTree the Java object to convert. May be {@link JsonNull}.
    * @since 2.2
    */
-  public final @Nullable T fromJsonTree(JsonElement jsonTree) {
+  public final T fromJsonTree(JsonElement jsonTree) {
     try {
       JsonReader jsonReader = new JsonTreeReader(jsonTree);
       return read(jsonReader);

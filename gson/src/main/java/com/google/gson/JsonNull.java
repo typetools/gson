@@ -16,7 +16,6 @@
 
 package com.google.gson;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * A class representing a Json {@code null} value.
  *
@@ -62,7 +61,7 @@ public final class JsonNull extends JsonElement {
    * All instances of JsonNull are the same
    */
   @Override
-  public boolean equals(@Nullable Object other) {
+  public boolean equals(Object other) {
     return this == other || other instanceof JsonNull;
   }
 }
