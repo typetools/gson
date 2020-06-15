@@ -18,6 +18,7 @@ package com.google.gson;
 
 import java.lang.reflect.Field;
 import java.util.Locale;
+import org.checkerframework.checker.index.qual.LTLengthOf;
 
 /**
  * An enumeration that defines a few standard naming conventions for JSON field names.
@@ -158,8 +159,12 @@ public enum FieldNamingPolicy implements FieldNamingStrategy {
   /**
    * Ensures the JSON field names begins with an upper case letter.
    */
+  /*firstLetterIndex is assigned with 0 #1, length of a field name would be atleast 1,
+    substring(1) may be out or range if length of field is 1
+    though no exception is thrown by function substring*/
+  @SuppressWarnings({"index:assignment.type.incompatible","index:argument.type.incompatible"})
   static String upperCaseFirstLetter(String name) {
-    int firstLetterIndex = 0;
+    @LTLengthOf(value="name") int firstLetterIndex = 0; //#1
     int limit = name.length() - 1;
     for(; !Character.isLetter(name.charAt(firstLetterIndex)) && firstLetterIndex < limit; ++firstLetterIndex);
 
@@ -170,7 +175,7 @@ public enum FieldNamingPolicy implements FieldNamingStrategy {
 
     char uppercased = Character.toUpperCase(firstLetter);
     if(firstLetterIndex == 0) { //First character in the string is the first letter, saves 1 substring
-      return uppercased + name.substring(1);
+      return uppercased + name.substring(1); //#2
     }
 
     return name.substring(0, firstLetterIndex) + uppercased + name.substring(firstLetterIndex + 1);
