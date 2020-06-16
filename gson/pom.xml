@@ -30,8 +30,7 @@
         <version>3.8.1</version>
         <configuration>
 		<includes>
-			<include>**/gson/reflect/*.java</include>
-			<include>**/gson/*.java</include>
+			<include>**/gson/internal/*.java</include>
 	    <include>module-info.java</include>
     </includes>
           <release>11</release>

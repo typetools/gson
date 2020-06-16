@@ -130,7 +130,8 @@ public final class ConstructorConstructor {
    * Constructors for common interface types like Map and List and their
    * subtypes.
    */
-  @SuppressWarnings("unchecked") // use runtime checks to guarantee that 'T' is what it is
+   //getActualTypeArguments may return an empty array #1 #2
+  @SuppressWarnings({"unchecked","array.access.unsafe.high.constant"}) // use runtime checks to guarantee that 'T' is what it is
   private <T> ObjectConstructor<T> newDefaultImplementationConstructor(
       final Type type, Class<? super T> rawType) {
     if (Collection.class.isAssignableFrom(rawType)) {
@@ -145,7 +146,7 @@ public final class ConstructorConstructor {
           @SuppressWarnings("rawtypes")
           @Override public T construct() {
             if (type instanceof ParameterizedType) {
-              Type elementType = ((ParameterizedType) type).getActualTypeArguments()[0];
+              Type elementType = ((ParameterizedType) type).getActualTypeArguments()[0]; //#1
               if (elementType instanceof Class) {
                 return (T) EnumSet.noneOf((Class)elementType);
               } else {
@@ -197,7 +198,7 @@ public final class ConstructorConstructor {
           }
         };
       } else if (type instanceof ParameterizedType && !(String.class.isAssignableFrom(
-          TypeToken.get(((ParameterizedType) type).getActualTypeArguments()[0]).getRawType()))) {
+          TypeToken.get(((ParameterizedType) type).getActualTypeArguments()[0]).getRawType()))) { //#2
         return new ObjectConstructor<T>() {
           @Override public T construct() {
             return (T) new LinkedHashMap<Object, Object>();
