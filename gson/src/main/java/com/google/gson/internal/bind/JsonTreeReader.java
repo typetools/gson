@@ -28,6 +28,10 @@ import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Arrays;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.GTENegativeOne;
+import org.checkerframework.checker.index.qual.LTEqLengthOf;
+import org.checkerframework.checker.index.qual.LTLengthOf;
 
 /**
  * This reader walks the elements of a JsonElement as if it was coming from a
@@ -37,7 +41,7 @@ import java.util.Arrays;
  */
 public final class JsonTreeReader extends JsonReader {
   private static final Reader UNREADABLE_READER = new Reader() {
-    @Override public int read(char[] buffer, int offset, int count) throws IOException {
+    @Override public @GTENegativeOne @LTEqLengthOf("#1") int read(char[] buffer, @NonNegative @LTEqLengthOf("#1") int offset, @NonNegative @LTLengthOf(value="#1", offset="#2-1") int count) throws IOException {
       throw new AssertionError();
     }
     @Override public void close() throws IOException {
@@ -50,7 +54,7 @@ public final class JsonTreeReader extends JsonReader {
    * The nesting stack. Using a manual array rather than an ArrayList saves 20%.
    */
   private Object[] stack = new Object[32];
-  private int stackSize = 0;
+  private @NonNegative @LTEqLengthOf(value={"stack","pathIndices","pathNames"}) int stackSize = 0;
 
   /*
    * The path members. It corresponds directly to stack: At indices where the
@@ -68,11 +72,13 @@ public final class JsonTreeReader extends JsonReader {
     push(element);
   }
 
+  //push #1 ensures statckSize > 0, therefore stackSize-1 is a safe index #2
+  @SuppressWarnings("array.access.unsafe.low")
   @Override public void beginArray() throws IOException {
     expect(JsonToken.BEGIN_ARRAY);
     JsonArray array = (JsonArray) peekStack();
-    push(array.iterator());
-    pathIndices[stackSize - 1] = 0;
+    push(array.iterator()); //#1
+    pathIndices[stackSize - 1] = 0; //#2
   }
 
   @Override public void endArray() throws IOException {
@@ -104,13 +110,18 @@ public final class JsonTreeReader extends JsonReader {
     return token != JsonToken.END_OBJECT && token != JsonToken.END_ARRAY;
   }
 
+  /*if #3 is true, the stack has atleast two elements
+  one inserted by the constructor and another by beginArray()
+  which pushes array.iterator() similar to what is been checked in #3,
+  therefore stackSize-2 is safe*/
+  @SuppressWarnings("array.access.unsafe.low")
   @Override public JsonToken peek() throws IOException {
     if (stackSize == 0) {
       return JsonToken.END_DOCUMENT;
     }
 
     Object o = peekStack();
-    if (o instanceof Iterator) {
+    if (o instanceof Iterator) {//#3
       boolean isObject = stack[stackSize - 2] instanceof JsonObject;
       Iterator<?> iterator = (Iterator<?>) o;
       if (iterator.hasNext()) {
@@ -147,12 +158,17 @@ public final class JsonTreeReader extends JsonReader {
     }
   }
 
+  /*peekStack() is a private function and is called when stackSize>0 #4*/
+  @SuppressWarnings("array.access.unsafe.low")
   private Object peekStack() {
-    return stack[stackSize - 1];
+    return stack[stackSize - 1]; //#4
   }
 
+  /*popStack() is a private function and is called when stackSize>0 #5,
+  therefore --stackSize is a valid index*/
+  @SuppressWarnings({"array.access.unsafe.low","unary.decrement.type.incompatible"})
   private Object popStack() {
-    Object result = stack[--stackSize];
+    Object result = stack[--stackSize]; //#5
     stack[stackSize] = null;
     return result;
   }
@@ -164,12 +180,15 @@ public final class JsonTreeReader extends JsonReader {
     }
   }
 
+  /*#6 expect() checks if peek() is equal to expect's arg, if this turns
+  false it throws an exception, therefore stackSize>0 and index stackSize-1 is safe #7*/
+  @SuppressWarnings("array.access.unsafe.low")
   @Override public String nextName() throws IOException {
-    expect(JsonToken.NAME);
+    expect(JsonToken.NAME); //#6
     Iterator<?> i = (Iterator<?>) peekStack();
     Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next();
     String result = (String) entry.getKey();
-    pathNames[stackSize - 1] = result;
+    pathNames[stackSize - 1] = result; //#7
     push(entry.getValue());
     return result;
   }
@@ -249,15 +268,20 @@ public final class JsonTreeReader extends JsonReader {
     return result;
   }
 
+  //#8 initializes a new stack with 1 element, therefore #9 is accurate and valid
+  @SuppressWarnings("assignment.type.incompatible")
   @Override public void close() throws IOException {
-    stack = new Object[] { SENTINEL_CLOSED };
-    stackSize = 1;
+    stack = new Object[] { SENTINEL_CLOSED }; //#8
+    stackSize = 1; //#9
   }
 
+  /*if #10 is true there are atleast two elements, Json.BEGIN_ARRAY and array.iterator()
+  therefore stackSize>1 and stackSize-2 is safe #11*/
+  @SuppressWarnings("array.access.unsafe.low")
   @Override public void skipValue() throws IOException {
-    if (peek() == JsonToken.NAME) {
+    if (peek() == JsonToken.NAME) { //#10
       nextName();
-      pathNames[stackSize - 2] = "null";
+      pathNames[stackSize - 2] = "null"; //#11
     } else {
       popStack();
       if (stackSize > 0) {
@@ -281,21 +305,28 @@ public final class JsonTreeReader extends JsonReader {
     push(new JsonPrimitive((String) entry.getKey()));
   }
 
+  /*If #12 ensures to double the array size if stack is full,
+  therefore stackSize++ is a safe index #13*/
+  @SuppressWarnings({"array.access.unsafe.high","unary.increment.type.incompatible"})
   private void push(Object newTop) {
-    if (stackSize == stack.length) {
+    if (stackSize == stack.length) { //#12
       int newLength = stackSize * 2;
       stack = Arrays.copyOf(stack, newLength);
       pathIndices = Arrays.copyOf(pathIndices, newLength);
       pathNames = Arrays.copyOf(pathNames, newLength);
     }
-    stack[stackSize++] = newTop;
+    stack[stackSize++] = newTop; //#13
   }
 
+  /*the loop #14 should have been from 0 to stackSize-1,
+  though according to the developers logic #15 would ensure #16 is never
+  out of range*/
+  @SuppressWarnings("array.access.unsafe.high")
   @Override public String getPath() {
     StringBuilder result = new StringBuilder().append('$');
-    for (int i = 0; i < stackSize; i++) {
-      if (stack[i] instanceof JsonArray) {
-        if (stack[++i] instanceof Iterator) {
+    for (int i = 0; i < stackSize; i++) { //#14
+      if (stack[i] instanceof JsonArray) { //#15
+        if (stack[++i] instanceof Iterator) { //#16
           result.append('[').append(pathIndices[i]).append(']');
         }
       } else if (stack[i] instanceof JsonObject) {
