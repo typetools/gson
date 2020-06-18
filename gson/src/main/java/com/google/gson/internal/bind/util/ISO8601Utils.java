@@ -8,9 +8,9 @@ import org.checkerframework.checker.index.qual.NonNegative;
 /**
  * Utilities methods for manipulating dates in iso8601 format. This is much much faster and GC friendly than using SimpleDateFormat so
  * highly suitable if you (un)serialize lots of date objects.
- *
+ * 
  * Supported parse format: [yyyy-MM-dd|yyyyMMdd][T(hh:mm[:ss[.sss]]|hhmm[ss[.sss]])]?[Z|[+-]hh[:]mm]]
- *
+ * 
  * @see <a href="http://www.w3.org/TR/NOTE-datetime">this specification</a>
  */
 //Date parsing code from Jackson databind ISO8601Utils.java
@@ -19,13 +19,13 @@ public class ISO8601Utils
 {
     /**
      * ID to represent the 'UTC' string, default timezone since Jackson 2.7
-     *
+     * 
      * @since 2.7
      */
     private static final String UTC_ID = "UTC";
     /**
      * The UTC timezone, prefetched to avoid more lookups.
-     *
+     * 
      * @since 2.7
      */
     private static final TimeZone TIMEZONE_UTC = TimeZone.getTimeZone(UTC_ID);
@@ -38,7 +38,7 @@ public class ISO8601Utils
 
     /**
      * Format a date into 'yyyy-MM-ddThh:mm:ssZ' (default timezone, no milliseconds precision)
-     *
+     * 
      * @param date the date to format
      * @return the date formatted as 'yyyy-MM-ddThh:mm:ssZ'
      */
@@ -48,7 +48,7 @@ public class ISO8601Utils
 
     /**
      * Format a date into 'yyyy-MM-ddThh:mm:ss[.sss]Z' (GMT timezone)
-     *
+     * 
      * @param date the date to format
      * @param millis true to include millis precision otherwise false
      * @return the date formatted as 'yyyy-MM-ddThh:mm:ss[.sss]Z'
@@ -59,7 +59,7 @@ public class ISO8601Utils
 
     /**
      * Format date into yyyy-MM-ddThh:mm:ss[.sss][Z|[+-]hh:mm]
-     *
+     * 
      * @param date the date to format
      * @param millis true to include millis precision otherwise false
      * @param tz timezone to use for the formatting (UTC will produce 'Z')
@@ -115,7 +115,7 @@ public class ISO8601Utils
     /**
      * Parse a date from ISO-8601 formatted string. It expects a format
      * [yyyy-MM-dd|yyyyMMdd][T(hh:mm[:ss[.sss]]|hhmm[ss[.sss]])]?[Z|[+-]hh[:mm]]]
-     *
+     * 
      * @param date ISO string to parse in the appropriate format.
      * @param pos The position to start parsing from, updated to where parsing stopped.
      * @return the parsed date
@@ -148,7 +148,7 @@ public class ISO8601Utils
 
             // if the value has no time component (and no time zone), we are done
             boolean hasT = checkOffset(date, offset, 'T');
-
+            
             if (!hasT && (date.length() <= offset)) {
                 Calendar calendar = new GregorianCalendar(year, month - 1, day);
 
@@ -279,7 +279,7 @@ public class ISO8601Utils
 
     /**
      * Check if the expected character exist at the given offset in the value.
-     *
+     * 
      * @param value the string to check at the specified offset
      * @param offset the offset to look for the expected character
      * @param expected the expected character
@@ -291,7 +291,7 @@ public class ISO8601Utils
 
     /**
      * Parse an integer located between 2 given offsets in a string
-     *
+     * 
      * @param value the string to parse
      * @param beginIndex the start index for the integer in the string
      * @param endIndex the end index for the integer in the string
@@ -326,7 +326,7 @@ public class ISO8601Utils
 
     /**
      * Zero pad a number to a specified length
-     *
+     * 
      * @param buffer buffer to use for padding
      * @param value the integer value to pad if necessary.
      * @param length the length of the string we should zero pad
