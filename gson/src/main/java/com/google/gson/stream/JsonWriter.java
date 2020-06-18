@@ -29,6 +29,8 @@ import static com.google.gson.stream.JsonScope.EMPTY_OBJECT;
 import static com.google.gson.stream.JsonScope.NONEMPTY_ARRAY;
 import static com.google.gson.stream.JsonScope.NONEMPTY_DOCUMENT;
 import static com.google.gson.stream.JsonScope.NONEMPTY_OBJECT;
+import org.checkerframework.checker.index.qual.IndexOrHigh;
+import org.checkerframework.common.value.qual.ArrayLen;
 
 /**
  * Writes a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
@@ -140,8 +142,8 @@ public class JsonWriter implements Closeable, Flushable {
    * newline characters. This prevents eval() from failing with a syntax
    * error. http://code.google.com/p/google-gson/issues/detail?id=341
    */
-  private static final String[] REPLACEMENT_CHARS;
-  private static final String[] HTML_SAFE_REPLACEMENT_CHARS;
+  private static final String @ArrayLen(128) [] REPLACEMENT_CHARS;
+  private static final String @ArrayLen(128) [] HTML_SAFE_REPLACEMENT_CHARS;
   static {
     REPLACEMENT_CHARS = new String[128];
     for (int i = 0; i <= 0x1f; i++) {
@@ -166,7 +168,7 @@ public class JsonWriter implements Closeable, Flushable {
   private final Writer out;
 
   private int[] stack = new int[32];
-  private int stackSize = 0;
+  private @IndexOrHigh("stack") int stackSize = 0;
   {
     push(EMPTY_DOCUMENT);
   }
@@ -333,6 +335,10 @@ public class JsonWriter implements Closeable, Flushable {
    * Closes the current scope by appending any necessary whitespace and the
    * given bracket.
    */
+
+   /*close is a private function and is called after open() which pushes
+    empty to the stack therefore stackSize > 0  #1*/
+  @SuppressWarnings("unary.decrement.type.incompatible")
   private JsonWriter close(int empty, int nonempty, char closeBracket)
       throws IOException {
     int context = peek();
@@ -343,7 +349,7 @@ public class JsonWriter implements Closeable, Flushable {
       throw new IllegalStateException("Dangling name: " + deferredName);
     }
 
-    stackSize--;
+    stackSize--; //#1
     if (context == nonempty) {
       newline();
     }
@@ -351,11 +357,14 @@ public class JsonWriter implements Closeable, Flushable {
     return this;
   }
 
+  /*#2 ensures that if stack is full its size is doubled,
+  therefore #3 stackSize is within range of stack and code is safe*/
+  @SuppressWarnings({"array.access.unsafe.high","unary.increment.type.incompatible"})
   private void push(int newTop) {
-    if (stackSize == stack.length) {
+    if (stackSize == stack.length) { //#2
       stack = Arrays.copyOf(stack, stackSize * 2);
     }
-    stack[stackSize++] = newTop;
+    stack[stackSize++] = newTop; //#3
   }
 
   /**
@@ -371,8 +380,10 @@ public class JsonWriter implements Closeable, Flushable {
   /**
    * Replace the value on the top of the stack with the given value.
    */
+  //replaceTop is a private function and is called when stack is not empty, #4  is safe
+  @SuppressWarnings("array.access.unsafe.low")
   private void replaceTop(int topOfStack) {
-    stack[stackSize - 1] = topOfStack;
+    stack[stackSize - 1] = topOfStack; //#4
   }
 
   /**
@@ -560,6 +571,9 @@ public class JsonWriter implements Closeable, Flushable {
     stackSize = 0;
   }
 
+  /*c is a character having ascii value >= 0 therefore is a valid index #5
+   * if ensures last < i #6 therefore the index sent is a safe index for value #7*/
+  @SuppressWarnings({"array.access.unsafe.low","argument.type.incompatible"})
   private void string(String value) throws IOException {
     String[] replacements = htmlSafe ? HTML_SAFE_REPLACEMENT_CHARS : REPLACEMENT_CHARS;
     out.write('\"');
@@ -569,7 +583,7 @@ public class JsonWriter implements Closeable, Flushable {
       char c = value.charAt(i);
       String replacement;
       if (c < 128) {
-        replacement = replacements[c];
+        replacement = replacements[c]; //#5
         if (replacement == null) {
           continue;
         }
@@ -580,8 +594,8 @@ public class JsonWriter implements Closeable, Flushable {
       } else {
         continue;
       }
-      if (last < i) {
-        out.write(value, last, i - last);
+      if (last < i) { //#6
+        out.write(value, last, i - last); //#7
       }
       out.write(replacement);
       last = i + 1;

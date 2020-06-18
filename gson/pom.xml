@@ -29,13 +29,9 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-		<includes>
-			<include>**/gson/internal/bind/*.java</include>
-			<include>**/gson/inteenal/*.java</include>
-			<include>**/gson/reflect/*.java</include>
-			<include>**/gson/*.java</include>
-	    <include>module-info.java</include>
-    </includes>
+	  <excludes>
+		  <exclude>**/JsonReader.java</exclude>
+	  </excludes>
           <release>11</release>
           <compilerArguments>
             <Xmaxerrs>10000</Xmaxerrs>
