@@ -29,9 +29,6 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-	  <excludes>
-		  <exclude>**/JsonReader.java</exclude>
-	  </excludes>
           <release>11</release>
           <compilerArguments>
             <Xmaxerrs>10000</Xmaxerrs>

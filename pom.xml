@@ -81,9 +81,6 @@
                 <jdkToolchain>
                   <version>9</version>
 	  </jdkToolchain>
-	  <excludes>
-		  <exclude>**/JsonReader.java</exclude>
-	  </excludes>
               </configuration>
             </execution>
             <execution>
