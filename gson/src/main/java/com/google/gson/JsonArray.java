@@ -381,6 +381,10 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
     throw new IllegalStateException();
   }
 
+  /*The equals function defined below is to compare two non-interned object
+   and only one of the condition to determine they are equal is a reference 
+   equality test therefore its usage is safe*/
+  @SuppressWarnings("not.interned")
   @Override
   public boolean equals(Object o) {
     return (o == this) || (o instanceof JsonArray && ((JsonArray) o).elements.equals(elements));

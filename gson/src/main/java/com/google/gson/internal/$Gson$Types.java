@@ -29,7 +29,7 @@ import java.util.*;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkArgument;
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
-
+import org.checkerframework.checker.interning.qual.Interned;
 /**
  * Static methods for working with types.
  *
@@ -165,6 +165,10 @@ public final class $Gson$Types {
   /**
    * Returns true if {@code a} and {@code b} are equal.
    */
+  /*The equals function defined below is to compare two non-interned object
+   and only one of the condition to determine they are equal is a reference 
+   equality test therefore its usage is safe*/
+  @SuppressWarnings("not.interned")
   public static boolean equals(Type a, Type b) {
     if (a == b) {
       // also handles (a == null && b == null)
@@ -337,6 +341,9 @@ public final class $Gson$Types {
     return resolve(context, contextRawType, toResolve, new HashSet<TypeVariable>());
   }
 
+  /*#1-#7 equality checks are reference equality check and not value 
+   * equality check, therefore usage of == is safe*/
+  @SuppressWarnings("not.interned")
   private static Type resolve(Type context, Class<?> contextRawType, Type toResolve,
                               Collection<TypeVariable> visitedTypeVariables) {
     // this implementation is made a little more complicated in an attempt to avoid object-creation
@@ -350,7 +357,7 @@ public final class $Gson$Types {
           visitedTypeVariables.add(typeVariable);
         }
         toResolve = resolveTypeVariable(context, contextRawType, typeVariable);
-        if (toResolve == typeVariable) {
+        if (toResolve == typeVariable) { //#1
           return toResolve;
         }
 
@@ -358,7 +365,7 @@ public final class $Gson$Types {
         Class<?> original = (Class<?>) toResolve;
         Type componentType = original.getComponentType();
         Type newComponentType = resolve(context, contextRawType, componentType, visitedTypeVariables);
-        return componentType == newComponentType
+        return componentType == newComponentType //#2
             ? original
             : arrayOf(newComponentType);
 
@@ -366,7 +373,7 @@ public final class $Gson$Types {
         GenericArrayType original = (GenericArrayType) toResolve;
         Type componentType = original.getGenericComponentType();
         Type newComponentType = resolve(context, contextRawType, componentType, visitedTypeVariables);
-        return componentType == newComponentType
+        return componentType == newComponentType //#3
             ? original
             : arrayOf(newComponentType);
 
@@ -374,12 +381,12 @@ public final class $Gson$Types {
         ParameterizedType original = (ParameterizedType) toResolve;
         Type ownerType = original.getOwnerType();
         Type newOwnerType = resolve(context, contextRawType, ownerType, visitedTypeVariables);
-        boolean changed = newOwnerType != ownerType;
+        boolean changed = newOwnerType != ownerType; //#4
 
         Type[] args = original.getActualTypeArguments();
         for (int t = 0, length = args.length; t < length; t++) {
           Type resolvedTypeArgument = resolve(context, contextRawType, args[t], visitedTypeVariables);
-          if (resolvedTypeArgument != args[t]) {
+          if (resolvedTypeArgument != args[t]) { //#5
             if (!changed) {
               args = args.clone();
               changed = true;
@@ -399,12 +406,12 @@ public final class $Gson$Types {
 
         if (originalLowerBound.length == 1) {
           Type lowerBound = resolve(context, contextRawType, originalLowerBound[0], visitedTypeVariables);
-          if (lowerBound != originalLowerBound[0]) {
+          if (lowerBound != originalLowerBound[0]) { //#6
             return supertypeOf(lowerBound);
           }
         } else if (originalUpperBound.length == 1) {
           Type upperBound = resolve(context, contextRawType, originalUpperBound[0], visitedTypeVariables);
-          if (upperBound != originalUpperBound[0]) {
+          if (upperBound != originalUpperBound[0]) { //#7
             return subtypeOf(upperBound);
           }
         }

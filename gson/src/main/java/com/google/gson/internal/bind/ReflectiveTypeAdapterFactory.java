@@ -126,17 +126,25 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
             : new TypeAdapterRuntimeTypeWrapper(context, typeAdapter, fieldType.getType());
         t.write(writer, fieldValue);
       }
+      /*#2 the fieldValue sent can be an instance of the wrapper classes like
+       * Integer Float etc which are not interned, probably wrong annotation 
+       * of method set in jdk Field.java*/
+      @SuppressWarnings("argument.type.incompatible")
       @Override void read(JsonReader reader, Object value)
           throws IOException, IllegalAccessException {
         Object fieldValue = typeAdapter.read(reader);
         if (fieldValue != null || !isPrimitive) {
-          field.set(value, fieldValue);
+          field.set(value, fieldValue); //#2
         }
       }
+      /*Probable missing annotation in jdk class Object, Object should be
+      annotated as UsesObjectEquals, therefore below reference equality 
+      check is safe #1*/
+      @SuppressWarnings("not.interned")
       @Override public boolean writeField(Object value) throws IOException, IllegalAccessException {
         if (!serialized) return false;
         Object fieldValue = field.get(value);
-        return fieldValue != value; // avoid recursion for example for Throwable.cause
+        return fieldValue != value; //#1 // avoid recursion for example for Throwable.cause
       }
     };
   }

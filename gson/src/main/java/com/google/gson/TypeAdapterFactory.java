@@ -17,6 +17,7 @@
 package com.google.gson;
 
 import com.google.gson.reflect.TypeToken;
+import org.checkerframework.checker.interning.qual.UsesObjectEquals;
 
 /**
  * Creates type adapters for set of related types. Type adapter factories are
@@ -160,7 +161,7 @@ import com.google.gson.reflect.TypeToken;
  *
  * @since 2.1
  */
-public interface TypeAdapterFactory {
+public @UsesObjectEquals interface TypeAdapterFactory {
 
   /**
    * Returns a type adapter for {@code type}, or null if this factory doesn't

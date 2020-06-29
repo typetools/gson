@@ -104,6 +104,10 @@ public final class JsonTreeReader extends JsonReader {
     return token != JsonToken.END_OBJECT && token != JsonToken.END_ARRAY;
   }
 
+  /*Probable missing annotation in jdk, class Object should be annotated as 
+   * UsesObjectEquals, therefore it is safe for objects of class Object to use
+   * reference equality check #1*/
+  @SuppressWarnings("not.interned")
   @Override public JsonToken peek() throws IOException {
     if (stackSize == 0) {
       return JsonToken.END_DOCUMENT;
@@ -140,7 +144,7 @@ public final class JsonTreeReader extends JsonReader {
       }
     } else if (o instanceof JsonNull) {
       return JsonToken.NULL;
-    } else if (o == SENTINEL_CLOSED) {
+    } else if (o == SENTINEL_CLOSED) { //#1
       throw new IllegalStateException("JsonReader is closed");
     } else {
       throw new AssertionError();

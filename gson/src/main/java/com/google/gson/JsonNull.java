@@ -60,6 +60,10 @@ public final class JsonNull extends JsonElement {
   /**
    * All instances of JsonNull are the same
    */
+  /*The equals function defined below is to compare two non-interned object
+   and only one of the condition to determine they are equal is a reference 
+   equality test therefore its usage is safe*/
+  @SuppressWarnings("not.interned")
   @Override
   public boolean equals(Object other) {
     return this == other || other instanceof JsonNull;
