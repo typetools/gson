@@ -81,10 +81,6 @@
                 <jdkToolchain>
                   <version>9</version>
                 </jdkToolchain>
-		<includes>
-                  <include>**/gson/*.java</include>
-		  <include>module-info.java</include>
-	  </includes>
               </configuration>
             </execution>
             <execution>
@@ -110,7 +106,7 @@
               <Xmaxwarns>10000</Xmaxwarns>
             </compilerArguments>
             <annotationProcessors>
-              <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+              <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
             </annotationProcessors>
             <compilerArgs>
               <!--<arg>-Xbootclasspath/p:$CHECKERFRAMEWORK/checker/dist/jdk8.jar</arg>-->

@@ -29,10 +29,6 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-		<includes>
-            <include>**/gson/*.java</include>
-	    <include>module-info.java</include>
-    </includes>
           <release>11</release>
           <compilerArguments>
             <Xmaxerrs>10000</Xmaxerrs>
@@ -46,7 +42,7 @@
             </path>
           </annotationProcessorPaths>
           <annotationProcessors>
-            <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+            <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
           </annotationProcessors>
           <compilerArgs>
             <arg>-AprintErrorStack</arg>
