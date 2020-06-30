@@ -29,7 +29,7 @@ import java.util.*;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkArgument;
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
-import org.checkerframework.checker.interning.qual.Interned;
+
 /**
  * Static methods for working with types.
  *
