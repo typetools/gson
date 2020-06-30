@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.checkerframework.checker.interning.qual.Interned;
 
 /**
  * A map of comparable keys to values. Unlike {@code TreeMap}, this class uses
@@ -38,14 +39,16 @@ import java.util.Set;
  * LinkedHashMap classes.
  */
 public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements Serializable {
-  @SuppressWarnings({ "unchecked", "rawtypes" }) // to avoid Comparable<Comparable<Comparable<...>>>
-  private static final Comparator<Comparable> NATURAL_ORDER = new Comparator<Comparable>() {
+  /*as the below Comparator implementing class definition creates an immutable 
+   * object, therefore object created would be interned*/
+  @SuppressWarnings({ "unchecked", "rawtypes", "interned.object.creation" }) // to avoid Comparable<Comparable<Comparable<...>>>
+  private static @Interned final Comparator<Comparable> NATURAL_ORDER = new @Interned Comparator<Comparable>() {
     public int compare(Comparable a, Comparable b) {
       return a.compareTo(b);
     }
   };
 
-  Comparator<? super K> comparator;
+  @Interned Comparator<? super K> comparator;
   Node<K, V>[] table;
   final Node<K, V> header;
   int size = 0;
@@ -69,7 +72,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    *     use the natural ordering.
    */
   @SuppressWarnings({ "unchecked", "rawtypes" }) // unsafe! if comparator is null, this assumes K is comparable
-  public LinkedHashTreeMap(Comparator<? super K> comparator) {
+  public LinkedHashTreeMap(@Interned Comparator<? super K> comparator) {
     this.comparator = comparator != null
         ? comparator
         : (Comparator) NATURAL_ORDER;
@@ -101,6 +104,11 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     return result;
   }
 
+  /*Here the usage of == to is safe as the logic of the below function 
+   * is concerned with the reference equality check and not value equality. 
+   * It tries to search for a particular object or element in a tree and 
+   * not a value therefore is safe #1*/
+  @SuppressWarnings("not.interned")
   @Override public void clear() {
     Arrays.fill(table, null);
     size = 0;
@@ -108,7 +116,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
 
     // Clear all links to help GC
     Node<K, V> header = this.header;
-    for (Node<K, V> e = header.next; e != header; ) {
+    for (Node<K, V> e = header.next; e != header; ) { //#1
       Node<K, V> next = e.next;
       e.next = e.prev = null;
       e = next;
@@ -308,6 +316,11 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     return node;
   }
 
+  /*Here the usage of == to is safe as the logic of the below function 
+   * is concerned with the reference equality check and not value equality. 
+   * It tries to search for a particular object or element in a tree and 
+   * not a value therefore is safe #2 #3*/
+  @SuppressWarnings("not.interned")
   private void replaceInParent(Node<K, V> node, Node<K, V> replacement) {
     Node<K, V> parent = node.parent;
     node.parent = null;
@@ -316,10 +329,10 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     }
 
     if (parent != null) {
-      if (parent.left == node) {
+      if (parent.left == node) { //#2
         parent.left = replacement;
       } else {
-        assert (parent.right == node);
+        assert (parent.right == node); //#3
         parent.right = replacement;
       }
     } else {
@@ -765,10 +778,18 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     LinkedTreeMapIterator() {
     }
 
+    /*Here the usage of == to is safe as the logic of the below function 
+     * is concerned with the reference equality check and not value equality.#4 
+     */
+    @SuppressWarnings("not.interned")
     public final boolean hasNext() {
-      return next != header;
+      return next != header; //#4
     }
 
+    /*Here the usage of == to is safe as the logic of the below function 
+     * is concerned with the reference equality check and not value equality.#4 
+     */
+    @SuppressWarnings("not.interned")
     final Node<K, V> nextNode() {
       Node<K, V> e = next;
       if (e == header) {

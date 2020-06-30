@@ -41,7 +41,10 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     return delegate.read(in);
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  /*the function getRuntimeTypeIfMoreSpecific returns either the same `type 
+   * with same reference sent #1 or returns a different type which wouldn't 
+   * be equal to `type`. Therefore using == or reference check is safe in #2*/
+  @SuppressWarnings({"rawtypes", "unchecked","not.interned"})
   @Override
   public void write(JsonWriter out, T value) throws IOException {
     // Order of preference for choosing type adapters
@@ -51,8 +54,8 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     // Fourth preference: reflective type adapter for the declared type
 
     TypeAdapter chosen = delegate;
-    Type runtimeType = getRuntimeTypeIfMoreSpecific(type, value);
-    if (runtimeType != type) {
+    Type runtimeType = getRuntimeTypeIfMoreSpecific(type, value); //#1
+    if (runtimeType != type) { //#2
       TypeAdapter runtimeTypeAdapter = context.getAdapter(TypeToken.get(runtimeType));
       if (!(runtimeTypeAdapter instanceof ReflectiveTypeAdapterFactory.Adapter)) {
         // The user registered a type adapter for the runtime type, so we will use that
