@@ -233,9 +233,11 @@ public final class JsonPrimitive extends JsonElement {
     return isNumber() ? getAsNumber().byteValue() : Byte.parseByte(getAsString());
   }
 
+  //getAsString returns a String of minimum length 1, charAt(0) is safe 
+  @SuppressWarnings("index:argument.type.incompatible")
   @Override
   public char getAsCharacter() {
-    return getAsString().charAt(0);
+    return getAsString().charAt(0); //#1
   }
 
   @Override

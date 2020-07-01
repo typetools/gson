@@ -60,6 +60,9 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
     this.componentType = componentType;
   }
 
+  /*array has the same size as list due to statements #1 and #2,
+  therefore i is an index for both list and array hence #3 is safe*/
+  @SuppressWarnings("argument.type.incompatible")
   @Override public Object read(JsonReader in) throws IOException {
     if (in.peek() == JsonToken.NULL) {
       in.nextNull();
@@ -74,10 +77,10 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
     }
     in.endArray();
 
-    int size = list.size();
-    Object array = Array.newInstance(componentType, size);
+    int size = list.size(); //#1
+    Object array = Array.newInstance(componentType, size); //#2
     for (int i = 0; i < size; i++) {
-      Array.set(array, i, list.get(i));
+      Array.set(array, i, list.get(i)); //#3
     }
     return array;
   }

@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
  * A class representing an array type in Json. An array is a list of {@link JsonElement}s each of
@@ -40,7 +41,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
     elements = new ArrayList<JsonElement>();
   }
   
-  public JsonArray(int capacity) {
+  public JsonArray(@NonNegative int capacity) {
     elements = new ArrayList<JsonElement>(capacity);
   }
 
@@ -391,3 +392,4 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
     return elements.hashCode();
   }
 }
+

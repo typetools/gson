@@ -28,6 +28,10 @@ import com.google.gson.stream.MalformedJsonException;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.Writer;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.IndexFor;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LTEqLengthOf;
 
 /**
  * Reads and writes GSON parse trees over streams.
@@ -88,7 +92,9 @@ public final class Streams {
       this.appendable = appendable;
     }
 
-    @Override public void write(char[] chars, int offset, int length) throws IOException {
+    //here currentWrite is used with chars
+    @SuppressWarnings("argument.type.incompatible")
+    @Override public void write(char[] chars, @NonNegative @LTEqLengthOf(value="#1") int offset, @NonNegative @LTLengthOf(value="#1",offset="#2 - 1")int length) throws IOException {
       currentWrite.chars = chars;
       appendable.append(currentWrite, offset, offset + length);
     }
@@ -103,16 +109,26 @@ public final class Streams {
     /**
      * A mutable char sequence pointing at a single char[].
      */
+    /*Code is dangerous as functions can be called without initializing chars*/
+    @SuppressWarnings("initialization.fields.uninitialized")
     static class CurrentWrite implements CharSequence {
       char[] chars;
-      public int length() {
+      /*chars stores the char sequence not `this`*/
+      @SuppressWarnings("override.return.invalid")
+      public @NonNegative @LTEqLengthOf("chars") int length() {
         return chars.length;
       }
-      public char charAt(int i) {
+      /*chars stores the char sequence not `this`*/
+      @SuppressWarnings("override.param.invalid")
+      public char charAt(@IndexFor("chars") int i) {
         return chars[i];
       }
-      public CharSequence subSequence(int start, int end) {
-        return new String(chars, start, end - start);
+
+      /*chars stores the char seq not `this`*/
+      /*end - start may be negative.#2*/
+      @SuppressWarnings({"override.param.invalid","argument.type.incompatible"})
+      public CharSequence subSequence(@NonNegative @LTLengthOf(value="chars") int start, @NonNegative @LTLengthOf(value="this.chars") int end) {
+        return new String(chars, start, end - start); //#2
       }
     }
   }

@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
  * A map of comparable keys to values. Unlike {@code TreeMap}, this class uses
@@ -45,7 +46,7 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
 
   Comparator<? super K> comparator;
   Node<K, V> root;
-  int size = 0;
+  @NonNegative int size = 0;
   int modCount = 0;
 
   // Used to preserve iteration order
@@ -74,7 +75,7 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
         : (Comparator) NATURAL_ORDER;
   }
 
-  @Override public int size() {
+  @Override public @NonNegative int size() {
     return size;
   }
 
@@ -214,6 +215,8 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
    *
    * @param unlink true to also unlink this node from the iteration linked list.
    */
+  //Size while removing is > 0 #1
+  @SuppressWarnings("unary.decrement.type.incompatible")
   void removeInternal(Node<K, V> node, boolean unlink) {
     if (unlink) {
       node.prev.next = node.next;
@@ -269,7 +272,7 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
     }
 
     rebalance(originalParent, false);
-    size--;
+    size--; //#1
     modCount++;
   }
 
@@ -558,7 +561,7 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
   }
 
   class EntrySet extends AbstractSet<Entry<K, V>> {
-    @Override public int size() {
+    @Override public @NonNegative int size() {
       return size;
     }
 
@@ -593,7 +596,7 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
   }
 
   final class KeySet extends AbstractSet<K> {
-    @Override public int size() {
+    @Override public @NonNegative int size() {
       return size;
     }
 

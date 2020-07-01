@@ -23,6 +23,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LTEqLengthOf;
+import org.checkerframework.checker.index.qual.IndexFor;
+import org.checkerframework.checker.index.qual.GTENegativeOne;
 
 /**
  * Reads a JSON (<a href="http://www.ietf.org/rfc/rfc7159.txt">RFC 7159</a>)
@@ -188,6 +193,9 @@ import java.util.Arrays;
  * @author Jesse Wilson
  * @since 1.6
  */
+/*#1 is inserting the first element into the stack, stackSize is 1 which is less than length of stackSize
+and is equal to the number of elements in stack, therefore is valid and safe (Could not add SuppressWarnings to instance initializer block)*/
+@SuppressWarnings("unary.increment.type.incompatible")
 public class JsonReader implements Closeable {
   private static final long MIN_INCOMPLETE_INTEGER = Long.MIN_VALUE / 10;
 
@@ -235,8 +243,8 @@ public class JsonReader implements Closeable {
    * long as the longest token that can be reported as a number.
    */
   private final char[] buffer = new char[1024];
-  private int pos = 0;
-  private int limit = 0;
+  private @NonNegative @LTLengthOf(value="buffer") int pos = 0;
+  private @NonNegative @LTLengthOf("buffer") int limit = 0;
 
   private int lineNumber = 0;
   private int lineStart = 0;
@@ -253,7 +261,7 @@ public class JsonReader implements Closeable {
    * The number of characters in a peeked number literal. Increment 'pos' by
    * this after reading a number.
    */
-  private int peekedNumberLength;
+  private @NonNegative @LTLengthOf(value="this.buffer", offset="this.pos-1") int peekedNumberLength;
 
   /**
    * A peeked string that should be parsed on the next double, long or string.
@@ -266,9 +274,9 @@ public class JsonReader implements Closeable {
    * The nesting stack. Using a manual array rather than an ArrayList saves 20%.
    */
   private int[] stack = new int[32];
-  private int stackSize = 0;
+  private @NonNegative @LTEqLengthOf({"stack", "pathNames", "pathIndices"}) int stackSize = 0;
   {
-    stack[stackSize++] = JsonScope.EMPTY_DOCUMENT;
+    stack[stackSize++] = JsonScope.EMPTY_DOCUMENT; //#1
   }
 
   /*
@@ -336,14 +344,16 @@ public class JsonReader implements Closeable {
    * Consumes the next token from the JSON stream and asserts that it is the
    * beginning of a new array.
    */
+  /*push #2 ensures the stackSize>1 therefore stackSize - 1 #3 is a safe index*/
+  @SuppressWarnings("array.access.unsafe.low")
   public void beginArray() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
     }
     if (p == PEEKED_BEGIN_ARRAY) {
-      push(JsonScope.EMPTY_ARRAY);
-      pathIndices[stackSize - 1] = 0;
+      push(JsonScope.EMPTY_ARRAY); //#2
+      pathIndices[stackSize - 1] = 0; //#3
       peeked = PEEKED_NONE;
     } else {
       throw new IllegalStateException("Expected BEGIN_ARRAY but was " + peek() + locationString());
@@ -354,14 +364,18 @@ public class JsonReader implements Closeable {
    * Consumes the next token from the JSON stream and asserts that it is the
    * end of the current array.
    */
+  /*if #4 condition is true, there are more than two elements in the stack
+  pushed by the instance initializer block and by beginArray(),
+  therefore #5 and #6 are safe*/
+  @SuppressWarnings({"array.access.unsafe.low","unary.decrement.type.incompatible"})
   public void endArray() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
     }
-    if (p == PEEKED_END_ARRAY) {
-      stackSize--;
-      pathIndices[stackSize - 1]++;
+    if (p == PEEKED_END_ARRAY) { //#4
+      stackSize--; //#5
+      pathIndices[stackSize - 1]++; //#6
       peeked = PEEKED_NONE;
     } else {
       throw new IllegalStateException("Expected END_ARRAY but was " + peek() + locationString());
@@ -389,15 +403,19 @@ public class JsonReader implements Closeable {
    * Consumes the next token from the JSON stream and asserts that it is the
    * end of the current object.
    */
+   /*if #7 condition is true, there are more than two elements in the stack,
+   pushed by the instance initializer block and by beginObject(),
+   therefore #8 and #9 are safe*/
+  @SuppressWarnings({"array.access.unsafe.low","unary.decrement.type.incompatible"})
   public void endObject() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
     }
-    if (p == PEEKED_END_OBJECT) {
-      stackSize--;
+    if (p == PEEKED_END_OBJECT) { //#7
+      stackSize--; //#8
       pathNames[stackSize] = null; // Free the last path name so that it can be garbage collected!
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#9
       peeked = PEEKED_NONE;
     } else {
       throw new IllegalStateException("Expected END_OBJECT but was " + peek() + locationString());
@@ -457,8 +475,13 @@ public class JsonReader implements Closeable {
     }
   }
 
+  /*the stack contains atleast one elemnent pushed by the instance initializer block
+  therefore #10 is safe*/
+  /*pos > 0 as atleast one character is read, therefore #11 #14 #15 are safe*/
+  /*pos is ensured to be less than limit #12 therefore pos++ #13 is safe*/
+  @SuppressWarnings({"array.access.unsafe.low","unary.decrement.type.incompatible","unary.increment.type.incompatible"})
   int doPeek() throws IOException {
-    int peekStack = stack[stackSize - 1];
+    int peekStack = stack[stackSize - 1]; //#10
     if (peekStack == JsonScope.EMPTY_ARRAY) {
       stack[stackSize - 1] = JsonScope.NONEMPTY_ARRAY;
     } else if (peekStack == JsonScope.NONEMPTY_ARRAY) {
@@ -505,7 +528,7 @@ public class JsonReader implements Closeable {
         }
       default:
         checkLenient();
-        pos--; // Don't consume the first character in an unquoted string.
+        pos--; // Don't consume the first character in an unquoted string //#11
         if (isLiteral((char) c)) {
           return peeked = PEEKED_UNQUOTED_NAME;
         } else {
@@ -521,8 +544,8 @@ public class JsonReader implements Closeable {
         break;
       case '=':
         checkLenient();
-        if ((pos < limit || fillBuffer(1)) && buffer[pos] == '>') {
-          pos++;
+        if ((pos < limit || fillBuffer(1)) && buffer[pos] == '>') { //#12
+          pos++; //#13
         }
         break;
       default:
@@ -539,7 +562,7 @@ public class JsonReader implements Closeable {
         return peeked = PEEKED_EOF;
       } else {
         checkLenient();
-        pos--;
+        pos--; //#14
       }
     } else if (peekStack == JsonScope.CLOSED) {
       throw new IllegalStateException("JsonReader is closed");
@@ -557,7 +580,7 @@ public class JsonReader implements Closeable {
       // In lenient mode, a 0-length literal in an array means 'null'.
       if (peekStack == JsonScope.EMPTY_ARRAY || peekStack == JsonScope.NONEMPTY_ARRAY) {
         checkLenient();
-        pos--;
+        pos--; //#15
         return peeked = PEEKED_NULL;
       } else {
         throw syntaxError("Unexpected value");
@@ -574,7 +597,6 @@ public class JsonReader implements Closeable {
     default:
       pos--; // Don't consume the first character in a literal value.
     }
-
     int result = peekKeyword();
     if (result != PEEKED_NONE) {
       return result;
@@ -593,6 +615,12 @@ public class JsonReader implements Closeable {
     return peeked = PEEKED_UNQUOTED;
   }
 
+  /*if statement check if pos + i is less than limit #17 therefore #18 is safe*/
+  /*loop #16 is valid traversal for both keyword and keywordUpper as they have same length,
+  therefore incrementing i in the loop leads to no unsafe access #19*/
+  /*According to documentation buffer is of highest length required for any token,
+  therefore pos+length #20 is less that buffer.length.*/
+  @SuppressWarnings({"array.access.unsafe.high","unary.increment.type.incompatible","compound.assignment.type.incompatible"})
   private int peekKeyword() throws IOException {
     // Figure out which keyword we're matching against by its first character.
     char c = buffer[pos];
@@ -617,12 +645,12 @@ public class JsonReader implements Closeable {
 
     // Confirm that chars [1..length) match the keyword.
     int length = keyword.length();
-    for (int i = 1; i < length; i++) {
-      if (pos + i >= limit && !fillBuffer(i + 1)) {
+    for (@IndexFor({"keyword","keywordUpper"}) int i = 1; i < length; i++) {//#16
+      if (pos + i >= limit && !fillBuffer(i + 1)) { //#17
         return PEEKED_NONE;
       }
-      c = buffer[pos + i];
-      if (c != keyword.charAt(i) && c != keywordUpper.charAt(i)) {
+      c = buffer[pos + i]; //#18
+      if (c != keyword.charAt(i) && c != keywordUpper.charAt(i)) { //#19
         return PEEKED_NONE;
       }
     }
@@ -633,10 +661,15 @@ public class JsonReader implements Closeable {
     }
 
     // We've found the keyword followed either by EOF or by a non-literal character.
-    pos += length;
+    pos += length; //#20
     return peeked = peeking;
   }
 
+  /*According to documentation buffer is of highest length required for any token,
+  therefore pos+i #24 is less that buffer.length.*/
+  /*#21 ensures p+i < limit, therefore p+i is a valid index for buffer #23*/
+  /*#22 ensures i < buffer.length therefore #25 is safe*/
+  @SuppressWarnings({"compound.assignment.type.incompatible","array.access.unsafe.high","assignment.type.incompatible"})
   private int peekNumber() throws IOException {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
     char[] buffer = this.buffer;
@@ -648,12 +681,12 @@ public class JsonReader implements Closeable {
     boolean fitsInLong = true;
     int last = NUMBER_CHAR_NONE;
 
-    int i = 0;
+    @NonNegative int i = 0;
 
     charactersOfNumber:
     for (; true; i++) {
-      if (p + i == l) {
-        if (i == buffer.length) {
+      if (p + i == l) { //#21
+        if (i == buffer.length) { //#22
           // Though this looks like a well-formed number, it's too long to continue reading. Give up
           // and let the application handle this as an unquoted literal.
           return PEEKED_NONE;
@@ -665,7 +698,7 @@ public class JsonReader implements Closeable {
         l = limit;
       }
 
-      char c = buffer[p + i];
+      char c = buffer[p + i]; //#23
       switch (c) {
       case '-':
         if (last == NUMBER_CHAR_NONE) {
@@ -729,11 +762,11 @@ public class JsonReader implements Closeable {
     // We've read a complete number. Decide if it's a PEEKED_LONG or a PEEKED_NUMBER.
     if (last == NUMBER_CHAR_DIGIT && fitsInLong && (value != Long.MIN_VALUE || negative) && (value!=0 || false==negative)) {
       peekedLong = negative ? value : -value;
-      pos += i;
+      pos += i; //#24
       return peeked = PEEKED_LONG;
     } else if (last == NUMBER_CHAR_DIGIT || last == NUMBER_CHAR_FRACTION_DIGIT
         || last == NUMBER_CHAR_EXP_DIGIT) {
-      peekedNumberLength = i;
+      peekedNumberLength = i; //#25
       return peeked = PEEKED_NUMBER;
     } else {
       return PEEKED_NONE;
@@ -772,10 +805,13 @@ public class JsonReader implements Closeable {
    * @throws java.io.IOException if the next token in the stream is not a property
    *     name.
    */
+  /*#26 doPeek() returns the top of the stack, if it does not return one of the
+  expected values, exception is thrown therefore stackSize > 1 and #27 is safe*/
+  @SuppressWarnings("array.access.unsafe.low")
   public String nextName() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#26
     }
     String result;
     if (p == PEEKED_UNQUOTED_NAME) {
@@ -788,7 +824,7 @@ public class JsonReader implements Closeable {
       throw new IllegalStateException("Expected a name but was " + peek() + locationString());
     }
     peeked = PEEKED_NONE;
-    pathNames[stackSize - 1] = result;
+    pathNames[stackSize - 1] = result; //#27
     return result;
   }
 
@@ -800,10 +836,15 @@ public class JsonReader implements Closeable {
    * @throws IllegalStateException if the next token is not a string or if
    *     this reader is closed.
    */
+   /*#28 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #30 is safe*/
+   /*According to documentation buffer is of highest length required for any token,
+   therefore pos+peekedNumberLength #29 is less that buffer.length.*/
+  @SuppressWarnings({"array.access.unsafe.low","compound.assignment.type.incompatible"})
   public String nextString() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#28
     }
     String result;
     if (p == PEEKED_UNQUOTED) {
@@ -819,12 +860,12 @@ public class JsonReader implements Closeable {
       result = Long.toString(peekedLong);
     } else if (p == PEEKED_NUMBER) {
       result = new String(buffer, pos, peekedNumberLength);
-      pos += peekedNumberLength;
+      pos += peekedNumberLength; //#29
     } else {
       throw new IllegalStateException("Expected a string but was " + peek() + locationString());
     }
     peeked = PEEKED_NONE;
-    pathIndices[stackSize - 1]++;
+    pathIndices[stackSize - 1]++; //#30
     return result;
   }
 
@@ -835,18 +876,21 @@ public class JsonReader implements Closeable {
    * @throws IllegalStateException if the next token is not a boolean or if
    *     this reader is closed.
    */
+   /*#31 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #32 #33 is safe*/
+  @SuppressWarnings("array.access.unsafe.low")
   public boolean nextBoolean() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#31
     }
     if (p == PEEKED_TRUE) {
       peeked = PEEKED_NONE;
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#32
       return true;
     } else if (p == PEEKED_FALSE) {
       peeked = PEEKED_NONE;
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#33
       return false;
     }
     throw new IllegalStateException("Expected a boolean but was " + peek() + locationString());
@@ -859,14 +903,17 @@ public class JsonReader implements Closeable {
    * @throws IllegalStateException if the next token is not null or if this
    *     reader is closed.
    */
+   /*#34 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #35 is safe*/
+  @SuppressWarnings("array.access.unsafe.low")
   public void nextNull() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#34
     }
     if (p == PEEKED_NULL) {
       peeked = PEEKED_NONE;
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#35
     } else {
       throw new IllegalStateException("Expected null but was " + peek() + locationString());
     }
@@ -881,21 +928,26 @@ public class JsonReader implements Closeable {
    * @throws NumberFormatException if the next literal value cannot be parsed
    *     as a double, or is non-finite.
    */
+   /*#36 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #37 #39 are safe*/
+  /* According to documentatiom buffer is taken for highest length token,
+  pos + peekedNuberLength < buffer.length and safe #38*/
+  @SuppressWarnings({"array.access.unsafe.low","compound.assignment.type.incompatible"})
   public double nextDouble() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#36
     }
 
     if (p == PEEKED_LONG) {
       peeked = PEEKED_NONE;
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#37
       return (double) peekedLong;
     }
 
     if (p == PEEKED_NUMBER) {
       peekedString = new String(buffer, pos, peekedNumberLength);
-      pos += peekedNumberLength;
+      pos += peekedNumberLength; //#38
     } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
       peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
     } else if (p == PEEKED_UNQUOTED) {
@@ -912,7 +964,7 @@ public class JsonReader implements Closeable {
     }
     peekedString = null;
     peeked = PEEKED_NONE;
-    pathIndices[stackSize - 1]++;
+    pathIndices[stackSize - 1]++; //#39
     return result;
   }
 
@@ -926,21 +978,26 @@ public class JsonReader implements Closeable {
    * @throws NumberFormatException if the next literal value cannot be parsed
    *     as a number, or exactly represented as a long.
    */
+   /*#40 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #41 #43  #44 are safe*/
+  /* According to documentatiom buffer is taken for highest length token,
+  pos + peekedNuberLength < buffer.length and is safe #42*/
+  @SuppressWarnings({"array.access.unsafe.low","compound.assignment.type.incompatible"})
   public long nextLong() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#40
     }
 
     if (p == PEEKED_LONG) {
       peeked = PEEKED_NONE;
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#41
       return peekedLong;
     }
 
     if (p == PEEKED_NUMBER) {
       peekedString = new String(buffer, pos, peekedNumberLength);
-      pos += peekedNumberLength;
+      pos += peekedNumberLength; //#42
     } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED || p == PEEKED_UNQUOTED) {
       if (p == PEEKED_UNQUOTED) {
         peekedString = nextUnquotedValue();
@@ -950,7 +1007,7 @@ public class JsonReader implements Closeable {
       try {
         long result = Long.parseLong(peekedString);
         peeked = PEEKED_NONE;
-        pathIndices[stackSize - 1]++;
+        pathIndices[stackSize - 1]++; //#43
         return result;
       } catch (NumberFormatException ignored) {
         // Fall back to parse as a double below.
@@ -967,7 +1024,7 @@ public class JsonReader implements Closeable {
     }
     peekedString = null;
     peeked = PEEKED_NONE;
-    pathIndices[stackSize - 1]++;
+    pathIndices[stackSize - 1]++; //#44
     return result;
   }
 
@@ -981,21 +1038,26 @@ public class JsonReader implements Closeable {
    * @throws NumberFormatException if any unicode escape sequences are
    *     malformed.
    */
+  //p > start due to #46, p - start > 0 and less than buffer.length - start, #47 #48 are safe
+  //as p > start, p-start is a valid argument #49
+  @SuppressWarnings({"assignment.type.incompatible","argument.type.incompatible"})
   private String nextQuotedValue(char quote) throws IOException {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
     char[] buffer = this.buffer;
     StringBuilder builder = null;
     while (true) {
-      int p = pos;
+      @NonNegative @LTLengthOf("buffer") int p = pos;
       int l = limit;
       /* the index of the first character not yet appended to the builder. */
       int start = p;
-      while (p < l) {
-        int c = buffer[p++];
+      while (p < l) { //#45
+        //The while condition #45 ensures p < l and less than buffer.length, #46 is safe
+       @SuppressWarnings({"array.access.unsafe.high","unary.increment.type.incompatible"})
+        int c = buffer[p++]; //#46
 
         if (c == quote) {
           pos = p;
-          int len = p - start - 1;
+          @NonNegative @LTLengthOf(value="buffer", offset="start - 1") int len = p - start - 1; //#47
           if (builder == null) {
             return new String(buffer, start, len);
           } else {
@@ -1004,7 +1066,7 @@ public class JsonReader implements Closeable {
           }
         } else if (c == '\\') {
           pos = p;
-          int len = p - start - 1;
+          @NonNegative @LTLengthOf(value="buffer", offset="start - 1") int len = p - start - 1; //#48
           if (builder == null) {
             int estimatedLength = (len + 1) * 2;
             builder = new StringBuilder(Math.max(estimatedLength, 16));
@@ -1024,7 +1086,7 @@ public class JsonReader implements Closeable {
         int estimatedLength = (p - start) * 2;
         builder = new StringBuilder(Math.max(estimatedLength, 16));
       }
-      builder.append(buffer, start, p - start);
+      builder.append(buffer, start, p - start); //#49
       pos = p;
       if (!fillBuffer(1)) {
         throw syntaxError("Unterminated string");
@@ -1035,14 +1097,18 @@ public class JsonReader implements Closeable {
   /**
    * Returns an unquoted value as a string.
    */
-  @SuppressWarnings("fallthrough")
+   /* According to documentatiom buffer is taken for highest length token,
+   therefore pos + i is less than buffer.length #52 #54*/
+   /*i = 0 is valid as pos could have a maximum value of buffer.length - 1 #50 #53*/
+   /* #51 is safe as the condition ensures that i < limit - pos in the loop*/
+  @SuppressWarnings({"fallthrough","compound.assignment.type.incompatible","assignment.type.incompatible","unary.increment.type.incompatible"})
   private String nextUnquotedValue() throws IOException {
     StringBuilder builder = null;
-    int i = 0;
+    @NonNegative @LTLengthOf(value="buffer", offset="this.pos-1") int i = 0; //#50
 
     findNonLiteralCharacter:
     while (true) {
-      for (; pos + i < limit; i++) {
+      for (; pos + i < limit; i++) { //51
         switch (buffer[pos + i]) {
         case '/':
         case '\\':
@@ -1079,15 +1145,15 @@ public class JsonReader implements Closeable {
         builder = new StringBuilder(Math.max(i,16));
       }
       builder.append(buffer, pos, i);
-      pos += i;
-      i = 0;
+      pos += i; //52
+      i = 0; //#53
       if (!fillBuffer(1)) {
         break;
       }
     }
-   
+
     String result = (null == builder) ? new String(buffer, pos, i) : builder.append(buffer, pos, i).toString();
-    pos += i;
+    pos += i; //#54
     return result;
   }
 
@@ -1098,7 +1164,9 @@ public class JsonReader implements Closeable {
       int p = pos;
       int l = limit;
       /* the index of the first character not yet appended to the builder. */
-      while (p < l) {
+      while (p < l) { //#55
+        //The abouve while #55 ensure p < l and buffer.length
+			  @SuppressWarnings("array.access.unsafe.high")
         int c = buffer[p++];
         if (c == quote) {
           pos = p;
@@ -1118,6 +1186,9 @@ public class JsonReader implements Closeable {
     throw syntaxError("Unterminated string");
   }
 
+  /* According to documentatiom buffer is taken for highest length token,
+  therefore pos + i is less than buffer.length #56*/
+  @SuppressWarnings("compound.assignment.type.incompatible")
   private void skipUnquotedValue() throws IOException {
     do {
       int i = 0;
@@ -1144,7 +1215,7 @@ public class JsonReader implements Closeable {
           return;
         }
       }
-      pos += i;
+      pos += i; //#56
     } while (fillBuffer(1));
   }
 
@@ -1158,10 +1229,15 @@ public class JsonReader implements Closeable {
    * @throws NumberFormatException if the next literal value cannot be parsed
    *     as a number, or exactly represented as an int.
    */
+   /*#57 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #58 #60 #61 are safe*/
+   /* According to documentatiom buffer is taken for highest length token,
+   pos + peekedNuberLength < buffer.length and is safe #59*/
+   @SuppressWarnings({"array.access.unsafe.low","compound.assignment.type.incompatible"})
   public int nextInt() throws IOException {
     int p = peeked;
     if (p == PEEKED_NONE) {
-      p = doPeek();
+      p = doPeek(); //#57
     }
 
     int result;
@@ -1171,13 +1247,13 @@ public class JsonReader implements Closeable {
         throw new NumberFormatException("Expected an int but was " + peekedLong + locationString());
       }
       peeked = PEEKED_NONE;
-      pathIndices[stackSize - 1]++;
+      pathIndices[stackSize - 1]++; //#58
       return result;
     }
 
     if (p == PEEKED_NUMBER) {
       peekedString = new String(buffer, pos, peekedNumberLength);
-      pos += peekedNumberLength;
+      pos += peekedNumberLength; //#59
     } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED || p == PEEKED_UNQUOTED) {
       if (p == PEEKED_UNQUOTED) {
         peekedString = nextUnquotedValue();
@@ -1187,7 +1263,7 @@ public class JsonReader implements Closeable {
       try {
         result = Integer.parseInt(peekedString);
         peeked = PEEKED_NONE;
-        pathIndices[stackSize - 1]++;
+        pathIndices[stackSize - 1]++; //#60
         return result;
       } catch (NumberFormatException ignored) {
         // Fall back to parse as a double below.
@@ -1204,17 +1280,20 @@ public class JsonReader implements Closeable {
     }
     peekedString = null;
     peeked = PEEKED_NONE;
-    pathIndices[stackSize - 1]++;
+    pathIndices[stackSize - 1]++; //#61
     return result;
   }
 
   /**
    * Closes this JSON reader and the underlying {@link java.io.Reader}.
    */
+  /*#62 0 is less than length of stack*/
+  /*stack has one element therefore stackSize = 1 is safe #63*/
+  @SuppressWarnings({"array.access.unsafe.high.constant","assignment.type.incompatible"})
   public void close() throws IOException {
     peeked = PEEKED_NONE;
-    stack[0] = JsonScope.CLOSED;
-    stackSize = 1;
+    stack[0] = JsonScope.CLOSED; //#62
+    stackSize = 1; //#63
     in.close();
   }
 
@@ -1223,12 +1302,18 @@ public class JsonReader implements Closeable {
    * elements are skipped. This method is intended for use when the JSON token
    * stream contains unrecognized or unhandled values.
    */
+   /*#64 doPeek() returns the top of the stack, if it does not return one of the
+   expected values, exception is thrown therefore stackSize > 1 and #68 is safe*/
+   /* According to documentatiom buffer is taken for highest length token,
+   pos + peekedNuberLength < buffer.length and is safe #67*/
+   /*as stackSize > 1 #65 #66 is safe*/
+  @SuppressWarnings({"array.access.unsafe.low","compound.assignment.type.incompatible","unary.decrement.type.incompatible"})
   public void skipValue() throws IOException {
     int count = 0;
     do {
       int p = peeked;
       if (p == PEEKED_NONE) {
-        p = doPeek();
+        p = doPeek(); //#64
       }
 
       if (p == PEEKED_BEGIN_ARRAY) {
@@ -1238,10 +1323,10 @@ public class JsonReader implements Closeable {
         push(JsonScope.EMPTY_OBJECT);
         count++;
       } else if (p == PEEKED_END_ARRAY) {
-        stackSize--;
+        stackSize--; //#65
         count--;
       } else if (p == PEEKED_END_OBJECT) {
-        stackSize--;
+        stackSize--; //#66
         count--;
       } else if (p == PEEKED_UNQUOTED_NAME || p == PEEKED_UNQUOTED) {
         skipUnquotedValue();
@@ -1250,23 +1335,25 @@ public class JsonReader implements Closeable {
       } else if (p == PEEKED_DOUBLE_QUOTED || p == PEEKED_DOUBLE_QUOTED_NAME) {
         skipQuotedValue('"');
       } else if (p == PEEKED_NUMBER) {
-        pos += peekedNumberLength;
+        pos += peekedNumberLength; //#67
       }
       peeked = PEEKED_NONE;
     } while (count != 0);
 
-    pathIndices[stackSize - 1]++;
+    pathIndices[stackSize - 1]++; //#68
     pathNames[stackSize - 1] = "null";
   }
 
+  //#69 ensures stackSize is less than stack.length, therefore #70 is safe
+  @SuppressWarnings({"array.access.unsafe.high","unary.increment.type.incompatible"})
   private void push(int newTop) {
-    if (stackSize == stack.length) {
+    if (stackSize == stack.length) { //#69
       int newLength = stackSize * 2;
       stack = Arrays.copyOf(stack, newLength);
       pathIndices = Arrays.copyOf(pathIndices, newLength);
       pathNames = Arrays.copyOf(pathNames, newLength);
     }
-    stack[stackSize++] = newTop;
+    stack[stackSize++] = newTop; //#70
   }
 
   /**
@@ -1274,24 +1361,30 @@ public class JsonReader implements Closeable {
    * exhausted before that many characters are available, this returns
    * false.
    */
+  /*#73 ensured that total is no more than buffer.length - limit,
+  therefore #74 is safe*/
+  /*#75 is safe as pos = 0 and incrementing pos once is less than buffer.length*/
+  /*#73 has safe arguments as buffer.length > limit and buffer.length - limit > 0*/
+  /*#72 arraycopy has valid arguments due to #71 as limit is less than buffer.length - pos*/
+  @SuppressWarnings({"compound.assignment.type.incompatible","unary.increment.type.incompatible","argument.type.incompatible"})
   private boolean fillBuffer(int minimum) throws IOException {
     char[] buffer = this.buffer;
     lineStart -= pos;
     if (limit != pos) {
-      limit -= pos;
-      System.arraycopy(buffer, pos, buffer, 0, limit);
+      limit -= pos; //#71
+      System.arraycopy(buffer, pos, buffer, 0, limit); //#72
     } else {
       limit = 0;
     }
 
     pos = 0;
     int total;
-    while ((total = in.read(buffer, limit, buffer.length - limit)) != -1) {
-      limit += total;
+    while ((total = in.read(buffer, limit, buffer.length - limit)) != -1) { //#73
+      limit += total; //#74
 
       // if this is the first read, consume an optional byte order mark (BOM) if it exists
       if (lineNumber == 0 && lineStart == 0 && limit > 0 && buffer[0] == '\ufeff') {
-        pos++;
+        pos++; //#75
         lineStart++;
         minimum++;
       }
@@ -1309,7 +1402,12 @@ public class JsonReader implements Closeable {
    * {@code buffer[pos-1]}; this means the caller can always push back the
    * returned character by decrementing {@code pos}.
    */
-  private int nextNonWhitespace(boolean throwOnEof) throws IOException {
+   /*As #77 c is a character being read from buffer pos > 0 therefore #78 is safe*/
+   /*as #78 pos was decremented to push'/' to buffer, #79 is a valid and safe operation to consume back '/'*/
+   /*#80 reads a character from the buffer therefore pos incremented #81 #84 is safe and valid*/
+   /*if #82 returns true, terminating characters of a comment are read by incrementing pos by 2, therefore #83 is safe*/
+  @SuppressWarnings({"unary.decrement.type.incompatible","unary.increment.type.incompatible","assignment.type.incompatible"})
+  private @GTENegativeOne int nextNonWhitespace(boolean throwOnEof) throws IOException {
     /*
      * This code uses ugly local variables 'p' and 'l' representing the 'pos'
      * and 'limit' fields respectively. Using locals rather than fields saves
@@ -1319,10 +1417,10 @@ public class JsonReader implements Closeable {
      * 'p' and 'l' after any (potentially indirect) call to the same method.
      */
     char[] buffer = this.buffer;
-    int p = pos;
+    @NonNegative @LTLengthOf("buffer") int p = pos;
     int l = limit;
     while (true) {
-      if (p == l) {
+      if (p == l) { //#76
         pos = p;
         if (!fillBuffer(1)) {
           break;
@@ -1331,7 +1429,11 @@ public class JsonReader implements Closeable {
         l = limit;
       }
 
-      int c = buffer[p++];
+      /*c stores the ascii value of a character which is NonNegative
+      #76 ensures p < l therefore less than limit and buffer.length therefore buffer[p] is safe
+      as p < l, p++ is within valid range*/
+      @SuppressWarnings({"assignment.type.incompatible","array.access.unsafe.high","unary.increment.type.incompatible"})
+      @NonNegative int c = buffer[p++];
       if (c == '\n') {
         lineNumber++;
         lineStart = p;
@@ -1340,33 +1442,33 @@ public class JsonReader implements Closeable {
         continue;
       }
 
-      if (c == '/') {
+      if (c == '/') {//#77
         pos = p;
         if (p == l) {
-          pos--; // push back '/' so it's still in the buffer when this method returns
+          pos--; // push back '/' so it's still in the buffer when this method returns #78
           boolean charsLoaded = fillBuffer(2);
-          pos++; // consume the '/' again
+          pos++; // consume the '/' again #79
           if (!charsLoaded) {
             return c;
           }
         }
 
         checkLenient();
-        char peek = buffer[pos];
+        char peek = buffer[pos]; //#80
         switch (peek) {
         case '*':
           // skip a /* c-style comment */
-          pos++;
-          if (!skipTo("*/")) {
+          pos++; //#81
+          if (!skipTo("*/")) { //#82
             throw syntaxError("Unterminated comment");
           }
-          p = pos + 2;
+          p = pos + 2; //#83
           l = limit;
           continue;
 
         case '/':
           // skip a // end-of-line comment
-          pos++;
+          pos++; //#84
           skipToEndOfLine();
           p = pos;
           l = limit;
@@ -1409,9 +1511,11 @@ public class JsonReader implements Closeable {
    * is terminated by "\r\n", the '\n' must be consumed as whitespace by the
    * caller.
    */
+  //pos is ensured to be < limit #85, therefore #86 is safe
+  @SuppressWarnings({"array.access.unsafe.high","unary.increment.type.incompatible"})
   private void skipToEndOfLine() throws IOException {
-    while (pos < limit || fillBuffer(1)) {
-      char c = buffer[pos++];
+    while (pos < limit || fillBuffer(1)) { //#85
+      char c = buffer[pos++]; //#86
       if (c == '\n') {
         lineNumber++;
         lineStart = pos;
@@ -1425,17 +1529,19 @@ public class JsonReader implements Closeable {
   /**
    * @param toFind a string to search for. Must not contain a newline.
    */
+  //pos+length is ensured to be less than limit #87 therefore #88 #88 are safe
+  @SuppressWarnings({"array.access.unsafe.high","array.access.unsafe.low","unary.increment.type.incompatible"})
   private boolean skipTo(String toFind) throws IOException {
     int length = toFind.length();
     outer:
-    for (; pos + length <= limit || fillBuffer(length); pos++) {
-      if (buffer[pos] == '\n') {
+    for (; pos + length <= limit || fillBuffer(length); pos++) { //#87
+      if (buffer[pos] == '\n') { //#88
         lineNumber++;
         lineStart = pos + 1;
         continue;
       }
       for (int c = 0; c < length; c++) {
-        if (buffer[pos + c] != toFind.charAt(c)) {
+        if (buffer[pos + c] != toFind.charAt(c)) { //#89
           continue outer;
         }
       }
@@ -1458,9 +1564,11 @@ public class JsonReader implements Closeable {
    * Returns a <a href="http://goessner.net/articles/JsonPath/">JsonPath</a> to
    * the current location in the JSON value.
    */
+  //Could not add annotation to i and not size #90
+  @SuppressWarnings("assignment.type.incompatible")
   public String getPath() {
     StringBuilder result = new StringBuilder().append('$');
-    for (int i = 0, size = stackSize; i < size; i++) {
+    for (@IndexFor("stack") int i = 0, size = stackSize; i < size; i++) { //#90
       switch (stack[i]) {
         case JsonScope.EMPTY_ARRAY:
         case JsonScope.NONEMPTY_ARRAY:
@@ -1494,20 +1602,28 @@ public class JsonReader implements Closeable {
    * @throws NumberFormatException if any unicode escape sequences are
    *     malformed.
    */
+  /*According to documentation, buffer is of highest possible length of token,
+  and pos+4 was already ensured to be less than limit #92, therefore #94 is safe*/
+  //the if #92 ensures 4 < buffer.length - pos therefore #93 is safe
+  @SuppressWarnings({"compound.assignment.type.incompatible","argument.type.incompatible"})
   private char readEscapeCharacter() throws IOException {
-    if (pos == limit && !fillBuffer(1)) {
+    if (pos == limit && !fillBuffer(1)) { //#91
       throw syntaxError("Unterminated escape sequence");
     }
 
+    //The above if #91 ensures pos < limit
+    @SuppressWarnings({"unary.increment.type.incompatible"})
     char escaped = buffer[pos++];
     switch (escaped) {
     case 'u':
-      if (pos + 4 > limit && !fillBuffer(4)) {
+      if (pos + 4 > limit && !fillBuffer(4)) { //#92
         throw syntaxError("Unterminated escape sequence");
       }
       // Equivalent to Integer.parseInt(stringPool.get(buffer, pos, 4), 16);
       char result = 0;
       for (int i = pos, end = i + 4; i < end; i++) {
+        //if #92 ensures pos + 4 < limit, therefore index i is safe
+        @SuppressWarnings("array.access.unsafe.high")
         char c = buffer[i];
         result <<= 4;
         if (c >= '0' && c <= '9') {
@@ -1517,10 +1633,10 @@ public class JsonReader implements Closeable {
         } else if (c >= 'A' && c <= 'F') {
           result += (c - 'A' + 10);
         } else {
-          throw new NumberFormatException("\\u" + new String(buffer, pos, 4));
+          throw new NumberFormatException("\\u" + new String(buffer, pos, 4)); //#93
         }
       }
-      pos += 4;
+      pos += 4; //#94
       return result;
 
     case 't':
@@ -1546,7 +1662,7 @@ public class JsonReader implements Closeable {
     case '\'':
     case '"':
     case '\\':
-    case '/':	
+    case '/':
     	return escaped;
     default:
     	// throw error when none of the above cases are matched
@@ -1565,23 +1681,28 @@ public class JsonReader implements Closeable {
   /**
    * Consumes the non-execute prefix if it exists.
    */
+  //ALready been checked if p+5 < limit #96 therefore no unsafe access in #97
+  //acc to doc returned character by nextNonWhitespace is always at pos-1 therefore decrementing is safe #95, as pos>0
+  /*According to documentation buffer is of highest possible length of token,
+  and pos+5 was already ensured to be less than limit #96, therefore #98 is safe*/
+  @SuppressWarnings({"array.access.unsafe.high","array.access.unsafe.low","compound.assignment.type.incompatible","unary.decrement.type.incompatible"})
   private void consumeNonExecutePrefix() throws IOException {
     // fast forward through the leading whitespace
     nextNonWhitespace(true);
-    pos--;
+    pos--; //#95
 
     int p = pos;
-    if (p + 5 > limit && !fillBuffer(5)) {
+    if (p + 5 > limit && !fillBuffer(5)) { //#96
       return;
     }
 
     char[] buf = buffer;
-    if(buf[p] != ')' || buf[p + 1] != ']' || buf[p + 2] != '}' || buf[p + 3] != '\'' || buf[p + 4] != '\n') {
+    if(buf[p] != ')' || buf[p + 1] != ']' || buf[p + 2] != '}' || buf[p + 3] != '\'' || buf[p + 4] != '\n') { //#97
       return; // not a security token!
     }
 
     // we consumed a security token!
-    pos += 5;
+    pos += 5; //#98
   }
 
   static {

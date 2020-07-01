@@ -28,7 +28,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.IndexFor;
 /**
  * A map of comparable keys to values. Unlike {@code TreeMap}, this class uses
  * insertion order for iteration order. Comparison order is only used as an
@@ -48,7 +49,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
   Comparator<? super K> comparator;
   Node<K, V>[] table;
   final Node<K, V> header;
-  int size = 0;
+  @NonNegative int size = 0;
   int modCount = 0;
   int threshold;
 
@@ -78,7 +79,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     this.threshold = (table.length / 2) + (table.length / 4); // 3/4 capacity
   }
 
-  @Override public int size() {
+  @Override public @NonNegative int size() {
     return size;
   }
 
@@ -128,11 +129,14 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    * @throws ClassCastException if {@code key} and the tree's keys aren't
    *     mutually comparable.
    */
+   /*hash & table.length-1 ensures index to be less than table.length-1
+   therefore it is safe as an index #4*/
+   @SuppressWarnings("assignment.type.incompatible")
   Node<K, V> find(K key, boolean create) {
     Comparator<? super K> comparator = this.comparator;
     Node<K, V>[] table = this.table;
     int hash = secondaryHash(key.hashCode());
-    int index = hash & (table.length - 1);
+    @IndexFor("table") int index = hash & (table.length - 1); //#4
     Node<K, V> nearest = table[index];
     int comparison = 0;
 
@@ -230,7 +234,10 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    * uses power-of-two length hash tables, that otherwise encounter collisions
    * for hashCodes that do not differ in lower or upper bits.
    */
-  private static int secondaryHash(int h) {
+   /*using unsigned right shift fills zeroes at the left end therefore making it
+   NonNegative*/
+  @SuppressWarnings("return.type.incompatible")
+  private static @NonNegative int secondaryHash(int h) {
     // Doug Lea's supplemental hash function
     h ^= (h >>> 20) ^ (h >>> 12);
     return h ^ (h >>> 7) ^ (h >>> 4);
@@ -242,6 +249,8 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    *
    * @param unlink true to also unlink this node from the iteration linked list.
    */
+  //Size during remove is > 0 #3
+  @SuppressWarnings("unary.decrement.type.incompatible")
   void removeInternal(Node<K, V> node, boolean unlink) {
     if (unlink) {
       node.prev.next = node.next;
@@ -296,7 +305,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     }
 
     rebalance(originalParent, false);
-    size--;
+    size--; //#3
     modCount++;
   }
 
@@ -307,7 +316,9 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
     }
     return node;
   }
-
+  /*hash & table.length-1 #1 ensures index to be less than table.length-1
+  therefore it is safe as an index*/
+  @SuppressWarnings("assignment.type.incompatible")
   private void replaceInParent(Node<K, V> node, Node<K, V> replacement) {
     Node<K, V> parent = node.parent;
     node.parent = null;
@@ -323,7 +334,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
         parent.right = replacement;
       }
     } else {
-      int index = node.hash & (table.length - 1);
+      @IndexFor("table") int index = node.hash & (table.length - 1); //#1
       table[index] = replacement;
     }
   }
@@ -563,6 +574,9 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
    * Returns a new array containing the same nodes as {@code oldTable}, but with
    * twice as many trees, each of (approximately) half the previous size.
    */
+   /*i is an index of oldTable and length of newTable is twice the length of
+   oldTable therefore index of oldTable is safe as an index for newTable #2*/
+  @SuppressWarnings("array.access.unsafe.high")
   static <K, V> Node<K, V>[] doubleCapacity(Node<K, V>[] oldTable) {
     // TODO: don't do anything if we're already at MAX_CAPACITY
     int oldCapacity = oldTable.length;
@@ -604,7 +618,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
       }
 
       // Populate the enlarged array with these new roots.
-      newTable[i] = leftSize > 0 ? leftBuilder.root() : null;
+      newTable[i] = leftSize > 0 ? leftBuilder.root() : null; //#2
       newTable[i + oldCapacity] = rightSize > 0 ? rightBuilder.root() : null;
     }
     return newTable;
@@ -792,7 +806,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
   }
 
   final class EntrySet extends AbstractSet<Entry<K, V>> {
-    @Override public int size() {
+    @Override public @NonNegative int size() {
       return size;
     }
 
@@ -827,7 +841,7 @@ public final class LinkedHashTreeMap<K, V> extends AbstractMap<K, V> implements 
   }
 
   final class KeySet extends AbstractSet<K> {
-    @Override public int size() {
+    @Override public @NonNegative int size() {
       return size;
     }
 

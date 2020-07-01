@@ -3,6 +3,7 @@ package com.google.gson.internal.bind.util;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.*;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
  * Utilities methods for manipulating dates in iso8601 format. This is much much faster and GC friendly than using SimpleDateFormat so
@@ -123,7 +124,7 @@ public class ISO8601Utils
     public static Date parse(String date, ParsePosition pos) throws ParseException {
         Exception fail = null;
         try {
-            int offset = pos.getIndex();
+            @NonNegative int offset = pos.getIndex();
 
             // extract year
             int year = parseInt(date, offset, offset += 4);
@@ -284,7 +285,7 @@ public class ISO8601Utils
      * @param expected the expected character
      * @return true if the expected character exist at the given offset
      */
-    private static boolean checkOffset(String value, int offset, char expected) {
+    private static boolean checkOffset(String value, @NonNegative int offset, char expected) {
         return (offset < value.length()) && (value.charAt(offset) == expected);
     }
 
@@ -341,7 +342,7 @@ public class ISO8601Utils
     /**
      * Returns the index of the first character in the string that is not a digit, starting at offset.
      */
-    private static int indexOfNonDigit(String string, int offset) {
+    private static @NonNegative int indexOfNonDigit(String string, @NonNegative int offset) {
         for (int i = offset; i < string.length(); i++) {
             char c = string.charAt(i);
             if (c < '0' || c > '9') return i;

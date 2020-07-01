@@ -30,6 +30,10 @@ import java.util.*;
 import static com.google.gson.internal.$Gson$Preconditions.checkArgument;
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
+import org.checkerframework.common.value.qual.ArrayLen;
+import org.checkerframework.common.value.qual.MinLen;
+import org.checkerframework.checker.index.qual.NonNegative;
+
 /**
  * Static methods for working with types.
  *
@@ -70,10 +74,12 @@ public final class $Gson$Types {
    * {@code ? extends CharSequence}. If {@code bound} is {@code Object.class},
    * this returns {@code ?}, which is shorthand for {@code ? extends Object}.
    */
+  /*Missing annotation in JDK in @MinLen(1) getUpperBounds() of WildcardType #2*/
+  @SuppressWarnings("assignment.type.incompatible")
   public static WildcardType subtypeOf(Type bound) {
-    Type[] upperBounds;
+    Type @MinLen(1)[] upperBounds;
     if (bound instanceof WildcardType) {
-      upperBounds = ((WildcardType) bound).getUpperBounds();
+      upperBounds = ((WildcardType) bound).getUpperBounds(); //#2
     } else {
       upperBounds = new Type[] { bound };
     }
@@ -100,6 +106,8 @@ public final class $Gson$Types {
    * according to {@link Object#equals(Object) Object.equals()}. The returned
    * type is {@link java.io.Serializable}.
    */
+  /*Missing annotation in JDK in @MinLen(1) getUpperBounds() of WildcardType #3*/
+  @SuppressWarnings("argument.type.incompatible")
   public static Type canonicalize(Type type) {
     if (type instanceof Class) {
       Class<?> c = (Class<?>) type;
@@ -116,14 +124,15 @@ public final class $Gson$Types {
 
     } else if (type instanceof WildcardType) {
       WildcardType w = (WildcardType) type;
-      return new WildcardTypeImpl(w.getUpperBounds(), w.getLowerBounds());
+      return new WildcardTypeImpl(w.getUpperBounds(), w.getLowerBounds()); //#3
 
     } else {
       // type is either serializable as-is or unsupported
       return type;
     }
   }
-
+  /*Missing annotation in JDK in @MinLen(1) getUpperBounds() of WildcardType #4*/
+  @SuppressWarnings("array.access.unsafe.high.constant")
   public static Class<?> getRawType(Type type) {
     if (type instanceof Class<?>) {
       // type is a normal class.
@@ -149,7 +158,7 @@ public final class $Gson$Types {
       return Object.class;
 
     } else if (type instanceof WildcardType) {
-      return getRawType(((WildcardType) type).getUpperBounds()[0]);
+      return getRawType(((WildcardType) type).getUpperBounds()[0]); //#4
 
     } else {
       String className = type == null ? "null" : type.getClass().getName();
@@ -233,6 +242,9 @@ public final class $Gson$Types {
    * IntegerSet}, the result for when supertype is {@code Set.class} is {@code Set<Integer>} and the
    * result when the supertype is {@code Collection.class} is {@code Collection<Integer>}.
    */
+  /*getGenericInterfaces and getInterfaces #7 return the same length array therefore #8 #9
+   i which is an index of `interfaces` can be used for the returned array of getGenericInterfaces*/
+  @SuppressWarnings("array.access.unsafe.high")
   static Type getGenericSupertype(Type context, Class<?> rawType, Class<?> toResolve) {
     if (toResolve == rawType) {
       return context;
@@ -240,12 +252,12 @@ public final class $Gson$Types {
 
     // we skip searching through interfaces if unknown is an interface
     if (toResolve.isInterface()) {
-      Class<?>[] interfaces = rawType.getInterfaces();
+      Class<?>[] interfaces = rawType.getInterfaces(); //#7
       for (int i = 0, length = interfaces.length; i < length; i++) {
         if (interfaces[i] == toResolve) {
-          return rawType.getGenericInterfaces()[i];
+          return rawType.getGenericInterfaces()[i]; //#8
         } else if (toResolve.isAssignableFrom(interfaces[i])) {
-          return getGenericSupertype(rawType.getGenericInterfaces()[i], interfaces[i], toResolve);
+          return getGenericSupertype(rawType.getGenericInterfaces()[i], interfaces[i], toResolve); //#9
         }
       }
     }
@@ -274,10 +286,12 @@ public final class $Gson$Types {
    *
    * @param supertype a superclass of, or interface implemented by, this.
    */
+   /*Missing annotation in JDK in @MinLen(1) getUpperBounds() of WildcardType #5*/
+  @SuppressWarnings("array.access.unsafe.high.constant")
   static Type getSupertype(Type context, Class<?> contextRawType, Class<?> supertype) {
     if (context instanceof WildcardType) {
       // wildcards are useless for resolving supertypes. As the upper bound has the same raw type, use it instead
-      context = ((WildcardType)context).getUpperBounds()[0];
+      context = ((WildcardType)context).getUpperBounds()[0]; //#5
     }
     checkArgument(supertype.isAssignableFrom(contextRawType));
     return resolve(context, contextRawType,
@@ -298,11 +312,13 @@ public final class $Gson$Types {
    * Returns the element type of this collection type.
    * @throws IllegalArgumentException if this type is not a collection.
    */
+   /*Missing annotation in JDK in @MinLen(1) getUpperBounds() of WildcardType #6*/
+  @SuppressWarnings("array.access.unsafe.high.constant")
   public static Type getCollectionElementType(Type context, Class<?> contextRawType) {
     Type collectionType = getSupertype(context, contextRawType, Collection.class);
 
     if (collectionType instanceof WildcardType) {
-      collectionType = ((WildcardType)collectionType).getUpperBounds()[0];
+      collectionType = ((WildcardType)collectionType).getUpperBounds()[0]; //#6
     }
     if (collectionType instanceof ParameterizedType) {
       return ((ParameterizedType) collectionType).getActualTypeArguments()[0];
@@ -314,7 +330,9 @@ public final class $Gson$Types {
    * Returns a two element array containing this map's key and value types in
    * positions 0 and 1 respectively.
    */
-  public static Type[] getMapKeyAndValueTypes(Type context, Class<?> contextRawType) {
+  //Map takes two parameters therefore returned array is of length 2 in #1
+  @SuppressWarnings("return.type.incompatible")
+  public static Type @ArrayLen(2)[] getMapKeyAndValueTypes(Type context, Class<?> contextRawType) {
     /*
      * Work around a problem with the declaration of java.util.Properties. That
      * class should extend Hashtable<String, String>, but it's declared to
@@ -328,7 +346,7 @@ public final class $Gson$Types {
     // TODO: strip wildcards?
     if (mapType instanceof ParameterizedType) {
       ParameterizedType mapParameterizedType = (ParameterizedType) mapType;
-      return mapParameterizedType.getActualTypeArguments();
+      return mapParameterizedType.getActualTypeArguments(); //#1
     }
     return new Type[] { Object.class, Object.class };
   }
@@ -416,6 +434,10 @@ public final class $Gson$Types {
     }
   }
 
+  /*as getTypeParameters and getTypeArguments return an array of same length
+   * `index` being an index of getTypeParameters's array is also a valid valid index
+   * for getActualTypeArguments's array #10*/
+   @SuppressWarnings({"array.access.unsafe.high"})
   static Type resolveTypeVariable(Type context, Class<?> contextRawType, TypeVariable<?> unknown) {
     Class<?> declaredByRaw = declaringClassOf(unknown);
 
@@ -426,14 +448,14 @@ public final class $Gson$Types {
 
     Type declaredBy = getGenericSupertype(context, contextRawType, declaredByRaw);
     if (declaredBy instanceof ParameterizedType) {
-      int index = indexOf(declaredByRaw.getTypeParameters(), unknown);
-      return ((ParameterizedType) declaredBy).getActualTypeArguments()[index];
+      @NonNegative int index = indexOf(declaredByRaw.getTypeParameters(), unknown);
+      return ((ParameterizedType) declaredBy).getActualTypeArguments()[index]; //#10
     }
 
     return unknown;
   }
 
-  private static int indexOf(Object[] array, Object toFind) {
+  private static @NonNegative int indexOf(Object[] array, Object toFind) {
     for (int i = 0, length = array.length; i < length; i++) {
       if (toFind.equals(array[i])) {
         return i;
@@ -504,14 +526,16 @@ public final class $Gson$Types {
           ^ hashCodeOrZero(ownerType);
     }
 
+    //#11 already ensures typeArguments.length is not 0 when it reaches #12
+    @SuppressWarnings("array.access.unsafe.high.constant")
     @Override public String toString() {
       int length = typeArguments.length;
-      if (length == 0) {
+      if (length == 0) { //#11
         return typeToString(rawType);
       }
 
       StringBuilder stringBuilder = new StringBuilder(30 * (length + 1));
-      stringBuilder.append(typeToString(rawType)).append("<").append(typeToString(typeArguments[0]));
+      stringBuilder.append(typeToString(rawType)).append("<").append(typeToString(typeArguments[0])); //#12
       for (int i = 1; i < length; i++) {
         stringBuilder.append(", ").append(typeToString(typeArguments[i]));
       }
@@ -557,7 +581,7 @@ public final class $Gson$Types {
     private final Type upperBound;
     private final Type lowerBound;
 
-    public WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
+    public WildcardTypeImpl(Type @MinLen(1)[] upperBounds, Type[] lowerBounds) {
       checkArgument(lowerBounds.length <= 1);
       checkArgument(upperBounds.length == 1);
 
@@ -576,7 +600,7 @@ public final class $Gson$Types {
       }
     }
 
-    public Type[] getUpperBounds() {
+    public Type @MinLen(1)[] getUpperBounds() {
       return new Type[] { upperBound };
     }
 

@@ -25,6 +25,8 @@ import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.checkerframework.checker.index.qual.LTEqLengthOf;
+
 /**
  * Represents a generic type {@code T}. Java doesn't yet provide a way to
  * represent generic types, so this class does. Forces clients to create a
@@ -78,13 +80,15 @@ public class TypeToken<T> {
    * Returns the type from super class's type parameter in {@link $Gson$Types#canonicalize
    * canonical form}.
    */
+  //getActualTypeArguments() may return an empty array as per documentation
+  @SuppressWarnings("array.access.unsafe.high")
   static Type getSuperclassTypeParameter(Class<?> subclass) {
     Type superclass = subclass.getGenericSuperclass();
     if (superclass instanceof Class) {
       throw new RuntimeException("Missing type parameter.");
     }
     ParameterizedType parameterized = (ParameterizedType) superclass;
-    return $Gson$Types.canonicalize(parameterized.getActualTypeArguments()[0]);
+    return $Gson$Types.canonicalize(parameterized.getActualTypeArguments()[0]); //#1
   }
 
   /**
@@ -182,6 +186,9 @@ public class TypeToken<T> {
    * Private recursive helper function to actually do the type-safe checking
    * of assignability.
    */
+  /*Statements #1 #3 #4 #5 lead to the same length of tArgs and tParams
+  therefore i in #6 could be used as an index for both*/
+  @SuppressWarnings({"index:array.access.unsafe.high"})
   private static boolean isAssignableFrom(Type from, ParameterizedType to,
       Map<String, Type> typeVarMap) {
 
@@ -194,17 +201,17 @@ public class TypeToken<T> {
     }
 
     // First figure out the class and any type information.
-    Class<?> clazz = $Gson$Types.getRawType(from);
+    Class<?> clazz = $Gson$Types.getRawType(from); //#1
     ParameterizedType ptype = null;
     if (from instanceof ParameterizedType) {
-      ptype = (ParameterizedType) from;
+      ptype = (ParameterizedType) from; //#3
     }
 
     // Load up parameterized variable info if it was parameterized.
     if (ptype != null) {
-      Type[] tArgs = ptype.getActualTypeArguments();
-      TypeVariable<?>[] tParams = clazz.getTypeParameters();
-      for (int i = 0; i < tArgs.length; i++) {
+      Type[] tArgs = ptype.getActualTypeArguments(); //#4
+      TypeVariable<?>[] tParams = clazz.getTypeParameters(); //#5
+      for (int i = 0; i < tArgs.length; i++) { //#6
         Type arg = tArgs[i];
         TypeVariable<?> var = tParams[i];
         while (arg instanceof TypeVariable<?>) {
@@ -235,12 +242,15 @@ public class TypeToken<T> {
    * Checks if two parameterized types are exactly equal, under the variable
    * replacement described in the typeVarMap.
    */
+  /*toArgs and fromArgs have the same length in this case due to #2,
+    therefore i could be used as an index for both*/
+  @SuppressWarnings({"index:array.access.unsafe.high"})
   private static boolean typeEquals(ParameterizedType from,
       ParameterizedType to, Map<String, Type> typeVarMap) {
-    if (from.getRawType().equals(to.getRawType())) {
+    if (from.getRawType().equals(to.getRawType())) { //#2
       Type[] fromArgs = from.getActualTypeArguments();
       Type[] toArgs = to.getActualTypeArguments();
-      for (int i = 0; i < fromArgs.length; i++) {
+      for (@LTEqLengthOf({"fromArgs"}) int i = 0; i < fromArgs.length; i++) {
         if (!matches(fromArgs[i], toArgs[i], typeVarMap)) {
           return false;
         }
