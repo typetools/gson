@@ -40,7 +40,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public JsonArray() {
     elements = new ArrayList<JsonElement>();
   }
-
+  
   public JsonArray(@NonNegative int capacity) {
     elements = new ArrayList<JsonElement>(capacity);
   }
@@ -172,7 +172,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
   public int size() {
     return elements.size();
   }
-
+  
   /**
    * Returns true if the array is empty
    *
@@ -219,7 +219,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
     }
     throw new IllegalStateException();
   }
-  
+
   /**
    * convenience method to get this array as a {@link String} if it contains a single element.
    *
@@ -392,3 +392,4 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
     return elements.hashCode();
   }
 }
+
