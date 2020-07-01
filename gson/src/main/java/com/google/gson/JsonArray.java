@@ -219,7 +219,7 @@ public final class JsonArray extends JsonElement implements Iterable<JsonElement
     }
     throw new IllegalStateException();
   }
-
+  
   /**
    * convenience method to get this array as a {@link String} if it contains a single element.
    *
