@@ -33,8 +33,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @SuppressWarnings({"unchecked", "rawtypes","initialization.static.fields.uninitialized"})
 final class UnsafeReflectionAccessor extends ReflectionAccessor {
   private static Class unsafeClass;
-  private @Nullable final Object theUnsafe = getUnsafeInstance();
-  private @Nullable final Field overrideField = getOverrideField();
+  private final @Nullable Object theUnsafe = getUnsafeInstance();
+  private final @Nullable Field overrideField = getOverrideField();
 
   /** {@inheritDoc} */
   @Override
