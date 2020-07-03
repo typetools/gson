@@ -33,6 +33,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * This class selects which fields and types to omit. It is configurable,
@@ -108,7 +109,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
     return result;
   }
 
-  public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
+  public @Nullable <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
     Class<?> rawType = type.getRawType();
     boolean excludeClass = excludeClassChecks(rawType);
 
@@ -121,9 +122,9 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
 
     return new TypeAdapter<T>() {
       /** The delegate is lazily created because it may not be needed, and creating it may fail. */
-      private TypeAdapter<T> delegate;
+      private @Nullable TypeAdapter<T> delegate;
 
-      @Override public T read(JsonReader in) throws IOException {
+      @Override public @Nullable T read(JsonReader in) throws IOException {
         if (skipDeserialize) {
           in.skipValue();
           return null;
@@ -234,11 +235,11 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
     return (clazz.getModifiers() & Modifier.STATIC) != 0;
   }
 
-  private boolean isValidVersion(Since since, Until until) {
+  private boolean isValidVersion(@Nullable Since since, @Nullable Until until) {
     return isValidSince(since) && isValidUntil(until);
   }
 
-  private boolean isValidSince(Since annotation) {
+  private boolean isValidSince(@Nullable Since annotation) {
     if (annotation != null) {
       double annotationVersion = annotation.value();
       if (annotationVersion > version) {
@@ -248,7 +249,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
     return true;
   }
 
-  private boolean isValidUntil(Until annotation) {
+  private boolean isValidUntil(@Nullable Until annotation) {
     if (annotation != null) {
       double annotationVersion = annotation.value();
       if (annotationVersion <= version) {

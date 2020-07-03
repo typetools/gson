@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Adapts types whose static type is only 'Object'. Uses getClass() on
@@ -37,7 +38,7 @@ import java.util.Map;
 public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings("unchecked")
-    @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+    @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
       if (type.getRawType() == Object.class) {
         return (TypeAdapter<T>) new ObjectTypeAdapter(gson);
       }
@@ -51,14 +52,17 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     this.gson = gson;
   }
 
-  @Override public Object read(JsonReader in) throws IOException {
+  //#1 ensures that read(in) #2 does not return null,
+  //#3 ensures that values sent to map.put() #4 are non null
+  @SuppressWarnings("nullness:argument.type.incompatible")
+  @Override public @Nullable Object read(JsonReader in) throws IOException {
     JsonToken token = in.peek();
     switch (token) {
     case BEGIN_ARRAY:
       List<Object> list = new ArrayList<Object>();
       in.beginArray();
-      while (in.hasNext()) {
-        list.add(read(in));
+      while (in.hasNext()) { //#1
+        list.add(read(in)); //#2
       }
       in.endArray();
       return list;
@@ -66,8 +70,8 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     case BEGIN_OBJECT:
       Map<String, Object> map = new LinkedTreeMap<String, Object>();
       in.beginObject();
-      while (in.hasNext()) {
-        map.put(in.nextName(), read(in));
+      while (in.hasNext()) { //#3
+        map.put(in.nextName(), read(in)); //#4
       }
       in.endObject();
       return map;

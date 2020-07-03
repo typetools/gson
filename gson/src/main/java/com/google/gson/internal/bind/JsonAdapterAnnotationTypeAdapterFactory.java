@@ -24,6 +24,9 @@ import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.reflect.TypeToken;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.initialization.qual.Initialized;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Given a type T, looks for the annotation {@link JsonAdapter} and uses an instance of the
@@ -40,7 +43,7 @@ public final class JsonAdapterAnnotationTypeAdapterFactory implements TypeAdapte
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> targetType) {
+  public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> targetType) {
     Class<? super T> rawType = targetType.getRawType();
     JsonAdapter annotation = rawType.getAnnotation(JsonAdapter.class);
     if (annotation == null) {
@@ -50,9 +53,9 @@ public final class JsonAdapterAnnotationTypeAdapterFactory implements TypeAdapte
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" }) // Casts guarded by conditionals.
-  TypeAdapter<?> getTypeAdapter(ConstructorConstructor constructorConstructor, Gson gson,
+  @Nullable TypeAdapter<?> getTypeAdapter(ConstructorConstructor constructorConstructor, Gson gson,
       TypeToken<?> type, JsonAdapter annotation) {
-    Object instance = constructorConstructor.get(TypeToken.get(annotation.value())).construct();
+    @Initialized @NonNull Object instance = constructorConstructor.get(TypeToken.get(annotation.value())).construct();
 
     TypeAdapter<?> typeAdapter;
     if (instance instanceof TypeAdapter) {

@@ -30,6 +30,7 @@ import java.util.*;
 import static com.google.gson.internal.$Gson$Preconditions.checkArgument;
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Static methods for working with types.
  *
@@ -50,7 +51,7 @@ public final class $Gson$Types {
    * @return a {@link java.io.Serializable serializable} parameterized type.
    */
   public static ParameterizedType newParameterizedTypeWithOwner(
-      Type ownerType, Type rawType, Type... typeArguments) {
+      @Nullable Type ownerType, Type rawType, @Nullable Type... typeArguments) {
     return new ParameterizedTypeImpl(ownerType, rawType, typeArguments);
   }
 
@@ -158,14 +159,14 @@ public final class $Gson$Types {
     }
   }
 
-  static boolean equal(Object a, Object b) {
+  static boolean equal(@Nullable Object a, @Nullable Object b) {
     return a == b || (a != null && a.equals(b));
   }
 
   /**
    * Returns true if {@code a} and {@code b} are equal.
    */
-  public static boolean equals(Type a, Type b) {
+  public static boolean equals(@Nullable Type a, @Nullable Type b) {
     if (a == b) {
       // also handles (a == null && b == null)
       return true;
@@ -220,7 +221,7 @@ public final class $Gson$Types {
     }
   }
 
-  static int hashCodeOrZero(Object o) {
+  static int hashCodeOrZero(@Nullable Object o) {
     return o != null ? o.hashCode() : 0;
   }
 
@@ -233,7 +234,10 @@ public final class $Gson$Types {
    * IntegerSet}, the result for when supertype is {@code Set.class} is {@code Set<Integer>} and the
    * result when the supertype is {@code Collection.class} is {@code Collection<Integer>}.
    */
-  static Type getGenericSupertype(Type context, Class<?> rawType, Class<?> toResolve) {
+  /* rawType is ensured to be not an interface by if #1 therefore rawSuperType is non-null #2
+  and can be sent to isAssignableFrom() #3*/
+  @SuppressWarnings("nullness:argument.type.incompatible")
+  static @Nullable Type getGenericSupertype(@Nullable Type context, Class<?> rawType, Class<?> toResolve) {
     if (toResolve == rawType) {
       return context;
     }
@@ -251,12 +255,12 @@ public final class $Gson$Types {
     }
 
     // check our supertypes
-    if (!rawType.isInterface()) {
+    if (!rawType.isInterface()) { //#1
       while (rawType != Object.class) {
-        Class<?> rawSupertype = rawType.getSuperclass();
+        Class<?> rawSupertype = rawType.getSuperclass(); //#2
         if (rawSupertype == toResolve) {
           return rawType.getGenericSuperclass();
-        } else if (toResolve.isAssignableFrom(rawSupertype)) {
+        } else if (toResolve.isAssignableFrom(rawSupertype)) { //#3
           return getGenericSupertype(rawType.getGenericSuperclass(), rawSupertype, toResolve);
         }
         rawType = rawSupertype;
@@ -274,7 +278,7 @@ public final class $Gson$Types {
    *
    * @param supertype a superclass of, or interface implemented by, this.
    */
-  static Type getSupertype(Type context, Class<?> contextRawType, Class<?> supertype) {
+  static @Nullable Type getSupertype(Type context, Class<?> contextRawType, Class<?> supertype) {
     if (context instanceof WildcardType) {
       // wildcards are useless for resolving supertypes. As the upper bound has the same raw type, use it instead
       context = ((WildcardType)context).getUpperBounds()[0];
@@ -288,7 +292,7 @@ public final class $Gson$Types {
    * Returns the component type of this array type.
    * @throws ClassCastException if this type is not an array.
    */
-  public static Type getArrayComponentType(Type array) {
+  public static @Nullable Type getArrayComponentType(Type array) {
     return array instanceof GenericArrayType
         ? ((GenericArrayType) array).getGenericComponentType()
         : ((Class<?>) array).getComponentType();
@@ -333,11 +337,14 @@ public final class $Gson$Types {
     return new Type[] { Object.class, Object.class };
   }
 
-  public static Type resolve(Type context, Class<?> contextRawType, Type toResolve) {
+  public static @Nullable Type resolve(Type context, Class<?> contextRawType, @Nullable Type toResolve) {
     return resolve(context, contextRawType, toResolve, new HashSet<TypeVariable>());
   }
-
-  private static Type resolve(Type context, Class<?> contextRawType, Type toResolve,
+  /*The function resolve returns null only if arg toResolve is returned
+  if at #5 #8 confirms that the returned value of resolve is not equal to
+  the sent toResolve arg in #4 #7, therefore arg sent in #6 #9 is not null*/
+  @SuppressWarnings("nullness:argument.type.incompatible")
+  private static @Nullable Type resolve(Type context, Class<?> contextRawType, @Nullable Type toResolve,
                               Collection<TypeVariable> visitedTypeVariables) {
     // this implementation is made a little more complicated in an attempt to avoid object-creation
     while (true) {
@@ -376,7 +383,7 @@ public final class $Gson$Types {
         Type newOwnerType = resolve(context, contextRawType, ownerType, visitedTypeVariables);
         boolean changed = newOwnerType != ownerType;
 
-        Type[] args = original.getActualTypeArguments();
+        @Nullable Type[] args = original.getActualTypeArguments();
         for (int t = 0, length = args.length; t < length; t++) {
           Type resolvedTypeArgument = resolve(context, contextRawType, args[t], visitedTypeVariables);
           if (resolvedTypeArgument != args[t]) {
@@ -398,14 +405,14 @@ public final class $Gson$Types {
         Type[] originalUpperBound = original.getUpperBounds();
 
         if (originalLowerBound.length == 1) {
-          Type lowerBound = resolve(context, contextRawType, originalLowerBound[0], visitedTypeVariables);
-          if (lowerBound != originalLowerBound[0]) {
-            return supertypeOf(lowerBound);
+          Type lowerBound = resolve(context, contextRawType, originalLowerBound[0], visitedTypeVariables); //#4
+          if (lowerBound != originalLowerBound[0]) { //#5
+            return supertypeOf(lowerBound); //#6
           }
         } else if (originalUpperBound.length == 1) {
-          Type upperBound = resolve(context, contextRawType, originalUpperBound[0], visitedTypeVariables);
-          if (upperBound != originalUpperBound[0]) {
-            return subtypeOf(upperBound);
+          Type upperBound = resolve(context, contextRawType, originalUpperBound[0], visitedTypeVariables); //#7
+          if (upperBound != originalUpperBound[0]) { //#8
+            return subtypeOf(upperBound); //#9
           }
         }
         return original;
@@ -446,7 +453,7 @@ public final class $Gson$Types {
    * Returns the declaring class of {@code typeVariable}, or {@code null} if it was not declared by
    * a class.
    */
-  private static Class<?> declaringClassOf(TypeVariable<?> typeVariable) {
+  private static @Nullable Class<?> declaringClassOf(TypeVariable<?> typeVariable) {
     GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
     return genericDeclaration instanceof Class
         ? (Class<?>) genericDeclaration
@@ -458,11 +465,14 @@ public final class $Gson$Types {
   }
 
   private static final class ParameterizedTypeImpl implements ParameterizedType, Serializable {
-    private final Type ownerType;
+    private final @Nullable Type ownerType;
     private final Type rawType;
     private final Type[] typeArguments;
 
-    public ParameterizedTypeImpl(Type ownerType, Type rawType, Type... typeArguments) {
+    /*after cloning in #11, #10 throws a null pointer exception
+    if this.typeArguments contain null, therefore the code is safe*/
+    @SuppressWarnings("nullness:assignment.type.incompatible")
+    public ParameterizedTypeImpl(@Nullable Type ownerType, Type rawType, @Nullable Type... typeArguments) {
       // require an owner type if the raw type needs it
       if (rawType instanceof Class<?>) {
         Class<?> rawTypeAsClass = (Class<?>) rawType;
@@ -473,9 +483,9 @@ public final class $Gson$Types {
 
       this.ownerType = ownerType == null ? null : canonicalize(ownerType);
       this.rawType = canonicalize(rawType);
-      this.typeArguments = typeArguments.clone();
+      this.typeArguments = typeArguments.clone(); //#11
       for (int t = 0, length = this.typeArguments.length; t < length; t++) {
-        checkNotNull(this.typeArguments[t]);
+        checkNotNull(this.typeArguments[t]); //#10
         checkNotPrimitive(this.typeArguments[t]);
         this.typeArguments[t] = canonicalize(this.typeArguments[t]);
       }
@@ -489,11 +499,11 @@ public final class $Gson$Types {
       return rawType;
     }
 
-    public Type getOwnerType() {
+    public @Nullable Type getOwnerType() {
       return ownerType;
     }
 
-    @Override public boolean equals(Object other) {
+    @Override public boolean equals(@Nullable Object other) {
       return other instanceof ParameterizedType
           && $Gson$Types.equals(this, (ParameterizedType) other);
     }
@@ -532,7 +542,7 @@ public final class $Gson$Types {
       return componentType;
     }
 
-    @Override public boolean equals(Object o) {
+    @Override public boolean equals(@Nullable Object o) {
       return o instanceof GenericArrayType
           && $Gson$Types.equals(this, (GenericArrayType) o);
     }
@@ -553,26 +563,29 @@ public final class $Gson$Types {
    * lower bounds. We only support what the Java 6 language needs - at most one
    * bound. If a lower bound is set, the upper bound must be Object.class.
    */
+  /*The args sent to #11 #12 #13 #14 are ensured to be non-null by
+  checkNotNull() which throws a null pointer exception if arg is null*/
+  @SuppressWarnings("nullness:argument.type.incompatible")
   private static final class WildcardTypeImpl implements WildcardType, Serializable {
     private final Type upperBound;
-    private final Type lowerBound;
+    private final @Nullable Type lowerBound;
 
-    public WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
+    public WildcardTypeImpl(@Nullable Type[] upperBounds, @Nullable Type[] lowerBounds) {
       checkArgument(lowerBounds.length <= 1);
       checkArgument(upperBounds.length == 1);
 
       if (lowerBounds.length == 1) {
         checkNotNull(lowerBounds[0]);
-        checkNotPrimitive(lowerBounds[0]);
+        checkNotPrimitive(lowerBounds[0]); //#11
         checkArgument(upperBounds[0] == Object.class);
-        this.lowerBound = canonicalize(lowerBounds[0]);
+        this.lowerBound = canonicalize(lowerBounds[0]); //#12
         this.upperBound = Object.class;
 
       } else {
         checkNotNull(upperBounds[0]);
-        checkNotPrimitive(upperBounds[0]);
+        checkNotPrimitive(upperBounds[0]); //#13
         this.lowerBound = null;
-        this.upperBound = canonicalize(upperBounds[0]);
+        this.upperBound = canonicalize(upperBounds[0]); //#14
       }
     }
 
@@ -584,7 +597,7 @@ public final class $Gson$Types {
       return lowerBound != null ? new Type[] { lowerBound } : EMPTY_TYPE_ARRAY;
     }
 
-    @Override public boolean equals(Object other) {
+    @Override public boolean equals(@Nullable Object other) {
       return other instanceof WildcardType
           && $Gson$Types.equals(this, (WildcardType) other);
     }

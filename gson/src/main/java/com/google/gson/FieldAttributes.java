@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A data object that stores attributes of a field.
@@ -107,7 +108,7 @@ public final class FieldAttributes {
    * @param annotation the class of the annotation that will be retrieved
    * @return the annotation instance if it is bound to the field; otherwise {@code null}
    */
-  public <T extends Annotation> T getAnnotation(Class<T> annotation) {
+  public @Nullable <T extends Annotation> T getAnnotation(Class<T> annotation) {
     return field.getAnnotation(annotation);
   }
 
@@ -146,7 +147,7 @@ public final class FieldAttributes {
    * @throws IllegalAccessException
    * @throws IllegalArgumentException
    */
-  Object get(Object instance) throws IllegalAccessException {
+  @Nullable Object get(Object instance) throws IllegalAccessException {
     return field.get(instance);
   }
 

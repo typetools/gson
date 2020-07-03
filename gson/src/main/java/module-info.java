@@ -9,4 +9,5 @@ module com.google.gson {
 	exports com.google.gson.stream;
 
 	requires transitive java.sql;
+	requires org.checkerframework.checker;
 }

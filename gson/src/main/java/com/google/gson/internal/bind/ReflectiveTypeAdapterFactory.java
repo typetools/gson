@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Type adapter that reflects over the fields and methods of a class.
@@ -91,7 +92,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     return fieldNames;
   }
 
-  @Override public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
+  @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
     Class<? super T> raw = type.getRawType();
 
     if (!Object.class.isAssignableFrom(raw)) {
@@ -126,11 +127,13 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
             : new TypeAdapterRuntimeTypeWrapper(context, typeAdapter, fieldType.getType());
         t.write(writer, fieldValue);
       }
+      //fieldValue is ensured to be non null #1 before sending it to field.set #2
+      @SuppressWarnings("nullness:argument.type.incompatible")
       @Override void read(JsonReader reader, Object value)
           throws IOException, IllegalAccessException {
         Object fieldValue = typeAdapter.read(reader);
-        if (fieldValue != null || !isPrimitive) {
-          field.set(value, fieldValue);
+        if (fieldValue != null || !isPrimitive) { //#1
+          field.set(value, fieldValue); //#2
         }
       }
       @Override public boolean writeField(Object value) throws IOException, IllegalAccessException {
@@ -141,6 +144,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     };
   }
 
+  //if resolve() in #1 returns null, exception is thrown by checkNotNull() in TypeToken.java
+  @SuppressWarnings("argument.type.incompatible")
   private Map<String, BoundField> getBoundFields(Gson context, TypeToken<?> type, Class<?> raw) {
     Map<String, BoundField> result = new LinkedHashMap<String, BoundField>();
     if (raw.isInterface()) {
@@ -163,6 +168,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         for (int i = 0, size = fieldNames.size(); i < size; ++i) {
           String name = fieldNames.get(i);
           if (i != 0) serialize = false; // only serialize the default name
+          //if `fieldType` is null, exception is thrown by checkNotNull() in TypeToken.java
+          @SuppressWarnings("argument.type.incompatible")
           BoundField boundField = createBoundField(context, field, name,
               TypeToken.get(fieldType), serialize, deserialize);
           BoundField replaced = result.put(name, boundField);
@@ -173,7 +180,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
               + " declares multiple JSON fields named " + previous.name);
         }
       }
-      type = TypeToken.get($Gson$Types.resolve(type.getType(), raw, raw.getGenericSuperclass()));
+      type = TypeToken.get($Gson$Types.resolve(type.getType(), raw, raw.getGenericSuperclass())); //#1
       raw = type.getRawType();
     }
     return result;
@@ -203,13 +210,15 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       this.boundFields = boundFields;
     }
 
-    @Override public T read(JsonReader in) throws IOException {
+    //#3 initializes instance wih a non null value, instance sent to #4 is non null and safe 
+    @SuppressWarnings("argument.type.incompatible")
+    @Override public @Nullable T read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
       }
 
-      T instance = constructor.construct();
+      T instance = constructor.construct(); //#3
 
       try {
         in.beginObject();
@@ -219,7 +228,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           if (field == null || !field.deserialized) {
             in.skipValue();
           } else {
-            field.read(in, instance);
+            field.read(in, instance); //#4
           }
         }
       } catch (IllegalStateException e) {

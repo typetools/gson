@@ -31,21 +31,23 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Adapt an array of objects.
  */
 public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+    //componentType #1 may be null, therefore #2 leads to warning
+    @SuppressWarnings({"unchecked", "rawtypes", "argument.type.incompatible"})
+    @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
       Type type = typeToken.getType();
       if (!(type instanceof GenericArrayType || type instanceof Class && ((Class<?>) type).isArray())) {
         return null;
       }
 
-      Type componentType = $Gson$Types.getArrayComponentType(type);
-      TypeAdapter<?> componentTypeAdapter = gson.getAdapter(TypeToken.get(componentType));
+      Type componentType = $Gson$Types.getArrayComponentType(type); //#1
+      TypeAdapter<?> componentTypeAdapter = gson.getAdapter(TypeToken.get(componentType)); //#2
       return new ArrayTypeAdapter(
               gson, componentTypeAdapter, $Gson$Types.getRawType(componentType));
     }
@@ -59,8 +61,11 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
       new TypeAdapterRuntimeTypeWrapper<E>(context, componentTypeAdapter, componentType);
     this.componentType = componentType;
   }
-
-  @Override public Object read(JsonReader in) throws IOException {
+  /*#3 ensures #4 does not return null, therefore instance added to list is non null #5,
+  #6 ensures i is less than size of list and no null elements were inserted into the list
+  therefore #7 list.get(i) returns non null*/
+  @SuppressWarnings("nullness:argument.type.incompatible")
+  @Override public @Nullable Object read(JsonReader in) throws IOException {
     if (in.peek() == JsonToken.NULL) {
       in.nextNull();
       return null;
@@ -68,16 +73,16 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
 
     List<E> list = new ArrayList<E>();
     in.beginArray();
-    while (in.hasNext()) {
-      E instance = componentTypeAdapter.read(in);
-      list.add(instance);
+    while (in.hasNext()) { //#3
+      E instance = componentTypeAdapter.read(in); //#4
+      list.add(instance); //#5
     }
     in.endArray();
 
     int size = list.size();
     Object array = Array.newInstance(componentType, size);
-    for (int i = 0; i < size; i++) {
-      Array.set(array, i, list.get(i));
+    for (int i = 0; i < size; i++) { //#6
+      Array.set(array, i, list.get(i)); //#7
     }
     return array;
   }

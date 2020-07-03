@@ -56,6 +56,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Type adapters for basic types.
@@ -132,7 +133,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Boolean> BOOLEAN = new TypeAdapter<Boolean>() {
     @Override
-    public Boolean read(JsonReader in) throws IOException {
+    public @Nullable Boolean read(JsonReader in) throws IOException {
       JsonToken peek = in.peek();
       if (peek == JsonToken.NULL) {
         in.nextNull();
@@ -154,7 +155,7 @@ public final class TypeAdapters {
    * otherwise permitted.
    */
   public static final TypeAdapter<Boolean> BOOLEAN_AS_STRING = new TypeAdapter<Boolean>() {
-    @Override public Boolean read(JsonReader in) throws IOException {
+    @Override public @Nullable Boolean read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -172,7 +173,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> BYTE = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -195,7 +196,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> SHORT = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -217,7 +218,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> INTEGER = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -295,7 +296,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> LONG = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -314,7 +315,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> FLOAT = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -329,7 +330,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> DOUBLE = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -344,7 +345,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Number> NUMBER = new TypeAdapter<Number>() {
     @Override
-    public Number read(JsonReader in) throws IOException {
+    public @Nullable Number read(JsonReader in) throws IOException {
       JsonToken jsonToken = in.peek();
       switch (jsonToken) {
       case NULL:
@@ -367,7 +368,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<Character> CHARACTER = new TypeAdapter<Character>() {
     @Override
-    public Character read(JsonReader in) throws IOException {
+    public @Nullable Character read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -389,7 +390,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<String> STRING = new TypeAdapter<String>() {
     @Override
-    public String read(JsonReader in) throws IOException {
+    public @Nullable String read(JsonReader in) throws IOException {
       JsonToken peek = in.peek();
       if (peek == JsonToken.NULL) {
         in.nextNull();
@@ -406,9 +407,9 @@ public final class TypeAdapters {
       out.value(value);
     }
   };
-  
+
   public static final TypeAdapter<BigDecimal> BIG_DECIMAL = new TypeAdapter<BigDecimal>() {
-    @Override public BigDecimal read(JsonReader in) throws IOException {
+    @Override public @Nullable BigDecimal read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -424,9 +425,9 @@ public final class TypeAdapters {
       out.value(value);
     }
   };
-  
+
   public static final TypeAdapter<BigInteger> BIG_INTEGER = new TypeAdapter<BigInteger>() {
-    @Override public BigInteger read(JsonReader in) throws IOException {
+    @Override public @Nullable BigInteger read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -447,7 +448,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<StringBuilder> STRING_BUILDER = new TypeAdapter<StringBuilder>() {
     @Override
-    public StringBuilder read(JsonReader in) throws IOException {
+    public @Nullable StringBuilder read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -465,7 +466,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<StringBuffer> STRING_BUFFER = new TypeAdapter<StringBuffer>() {
     @Override
-    public StringBuffer read(JsonReader in) throws IOException {
+    public @Nullable StringBuffer read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -483,7 +484,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<URL> URL = new TypeAdapter<URL>() {
     @Override
-    public URL read(JsonReader in) throws IOException {
+    public @Nullable URL read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -501,7 +502,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<URI> URI = new TypeAdapter<URI>() {
     @Override
-    public URI read(JsonReader in) throws IOException {
+    public @Nullable URI read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -523,7 +524,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<InetAddress> INET_ADDRESS = new TypeAdapter<InetAddress>() {
     @Override
-    public InetAddress read(JsonReader in) throws IOException {
+    public @Nullable InetAddress read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -542,7 +543,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<UUID> UUID = new TypeAdapter<UUID>() {
     @Override
-    public UUID read(JsonReader in) throws IOException {
+    public @Nullable UUID read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -571,14 +572,14 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory TIMESTAMP_FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
-    @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+    @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
       if (typeToken.getRawType() != Timestamp.class) {
         return null;
       }
 
       final TypeAdapter<Date> dateTypeAdapter = gson.getAdapter(Date.class);
       return (TypeAdapter<T>) new TypeAdapter<Timestamp>() {
-        @Override public Timestamp read(JsonReader in) throws IOException {
+        @Override public @Nullable Timestamp read(JsonReader in) throws IOException {
           Date date = dateTypeAdapter.read(in);
           return date != null ? new Timestamp(date.getTime()) : null;
         }
@@ -599,7 +600,7 @@ public final class TypeAdapters {
     private static final String SECOND = "second";
 
     @Override
-    public Calendar read(JsonReader in) throws IOException {
+    public @Nullable Calendar read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return  null;
@@ -659,9 +660,13 @@ public final class TypeAdapters {
     newFactoryForMultipleTypes(Calendar.class, GregorianCalendar.class, CALENDAR);
 
   public static final TypeAdapter<Locale> LOCALE = new TypeAdapter<Locale>() {
+    /*in has already been checked for null #1, therefore atleast one token exists
+    which would lead to non-null language #2,
+    country and variant #3 #4 has been checked for null before sending them as args*/
+    @SuppressWarnings("argument.type.incompatible")
     @Override
-    public Locale read(JsonReader in) throws IOException {
-      if (in.peek() == JsonToken.NULL) {
+    public @Nullable Locale read(JsonReader in) throws IOException {
+      if (in.peek() == JsonToken.NULL) { //#1
         in.nextNull();
         return null;
       }
@@ -671,7 +676,7 @@ public final class TypeAdapters {
       String country = null;
       String variant = null;
       if (tokenizer.hasMoreElements()) {
-        language = tokenizer.nextToken();
+        language = tokenizer.nextToken(); //#2
       }
       if (tokenizer.hasMoreElements()) {
         country = tokenizer.nextToken();
@@ -679,9 +684,9 @@ public final class TypeAdapters {
       if (tokenizer.hasMoreElements()) {
         variant = tokenizer.nextToken();
       }
-      if (country == null && variant == null) {
+      if (country == null && variant == null) { //#3
         return new Locale(language);
-      } else if (variant == null) {
+      } else if (variant == null) { //#4
         return new Locale(language, country);
       } else {
         return new Locale(language, country, variant);
@@ -774,9 +779,11 @@ public final class TypeAdapters {
     private final Map<String, T> nameToConstant = new HashMap<String, T>();
     private final Map<T, String> constantToName = new HashMap<T, String>();
 
+    //According to JDK annotations getEnumConstants might return null #5
+    @SuppressWarnings("iterating.over.nullable")
     public EnumTypeAdapter(Class<T> classOfT) {
       try {
-        for (T constant : classOfT.getEnumConstants()) {
+        for (T constant : classOfT.getEnumConstants()) { //#5
           String name = constant.name();
           SerializedName annotation = classOfT.getField(name).getAnnotation(SerializedName.class);
           if (annotation != null) {
@@ -792,7 +799,7 @@ public final class TypeAdapters {
         throw new AssertionError(e);
       }
     }
-    @Override public T read(JsonReader in) throws IOException {
+    @Override public @Nullable T read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
@@ -806,16 +813,18 @@ public final class TypeAdapters {
   }
 
   public static final TypeAdapterFactory ENUM_FACTORY = new TypeAdapterFactory() {
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+    /*getSuperClass #7 returns null only if rawType is Object class or interface or primitive,
+    therefore rawType sent in #7 is non null and safe*/
+    @SuppressWarnings({"rawtypes", "unchecked", "argument.type.incompatible"})
+    @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
       Class<? super T> rawType = typeToken.getRawType();
       if (!Enum.class.isAssignableFrom(rawType) || rawType == Enum.class) {
         return null;
       }
       if (!rawType.isEnum()) {
-        rawType = rawType.getSuperclass(); // handle anonymous subclasses
+        rawType = rawType.getSuperclass(); // handle anonymous subclasses //#7
       }
-      return (TypeAdapter<T>) new EnumTypeAdapter(rawType);
+      return (TypeAdapter<T>) new EnumTypeAdapter(rawType); //#6
     }
   };
 
@@ -823,7 +832,7 @@ public final class TypeAdapters {
       final TypeToken<TT> type, final TypeAdapter<TT> typeAdapter) {
     return new TypeAdapterFactory() {
       @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
-      @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+      @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
         return typeToken.equals(type) ? (TypeAdapter<T>) typeAdapter : null;
       }
     };
@@ -833,7 +842,7 @@ public final class TypeAdapters {
       final Class<TT> type, final TypeAdapter<TT> typeAdapter) {
     return new TypeAdapterFactory() {
       @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
-      @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+      @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
         return typeToken.getRawType() == type ? (TypeAdapter<T>) typeAdapter : null;
       }
       @Override public String toString() {
@@ -846,7 +855,7 @@ public final class TypeAdapters {
       final Class<TT> unboxed, final Class<TT> boxed, final TypeAdapter<? super TT> typeAdapter) {
     return new TypeAdapterFactory() {
       @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
-      @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+      @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
         Class<? super T> rawType = typeToken.getRawType();
         return (rawType == unboxed || rawType == boxed) ? (TypeAdapter<T>) typeAdapter : null;
       }
@@ -861,7 +870,7 @@ public final class TypeAdapters {
       final Class<? extends TT> sub, final TypeAdapter<? super TT> typeAdapter) {
     return new TypeAdapterFactory() {
       @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
-      @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+      @Override public @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
         Class<? super T> rawType = typeToken.getRawType();
         return (rawType == base || rawType == sub) ? (TypeAdapter<T>) typeAdapter : null;
       }
@@ -880,7 +889,7 @@ public final class TypeAdapters {
       final Class<T1> clazz, final TypeAdapter<T1> typeAdapter) {
     return new TypeAdapterFactory() {
       @SuppressWarnings("unchecked")
-      @Override public <T2> TypeAdapter<T2> create(Gson gson, TypeToken<T2> typeToken) {
+      @Override public @Nullable <T2> TypeAdapter<T2> create(Gson gson, TypeToken<T2> typeToken) {
         final Class<? super T2> requestedType = typeToken.getRawType();
         if (!clazz.isAssignableFrom(requestedType)) {
           return null;
@@ -890,7 +899,7 @@ public final class TypeAdapters {
             typeAdapter.write(out, value);
           }
 
-          @Override public T1 read(JsonReader in) throws IOException {
+          @Override public @Nullable T1 read(JsonReader in) throws IOException {
             T1 result = typeAdapter.read(in);
             if (result != null && !requestedType.isInstance(result)) {
               throw new JsonSyntaxException("Expected a " + requestedType.getName()

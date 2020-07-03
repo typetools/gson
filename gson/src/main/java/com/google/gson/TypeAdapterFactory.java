@@ -17,6 +17,7 @@
 package com.google.gson;
 
 import com.google.gson.reflect.TypeToken;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Creates type adapters for set of related types. Type adapter factories are
@@ -166,5 +167,5 @@ public interface TypeAdapterFactory {
    * Returns a type adapter for {@code type}, or null if this factory doesn't
    * support {@code type}.
    */
-  <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type);
+  @Nullable <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type);
 }
