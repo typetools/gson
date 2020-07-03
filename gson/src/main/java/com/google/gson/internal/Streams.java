@@ -105,7 +105,8 @@ public final class Streams {
     /**
      * A mutable char sequence pointing at a single char[].
      */
-    /*Code is dangerous as functions can be called without initializing chars*/
+    /*CurrentWrite is used internally and `chars` is initialized before calling
+     * the instance methods of the class, therefore the code is safe*/
     @SuppressWarnings("initialization.fields.uninitialized")
     static class CurrentWrite implements CharSequence {
       char[] chars;

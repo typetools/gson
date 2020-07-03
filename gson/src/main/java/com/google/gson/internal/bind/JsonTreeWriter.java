@@ -73,12 +73,14 @@ public final class JsonTreeWriter extends JsonWriter {
     return stack.get(stack.size() - 1);
   }
 
+  /*The if #1 ensures that pendingName is not null in #2,
+   * therefore the code is safe*/
   @SuppressWarnings("nullness:argument.type.incompatible")
   private void put(JsonElement value) {
     if (pendingName != null) { //#1
       if (!value.isJsonNull() || getSerializeNulls()) {
         JsonObject object = (JsonObject) peek();
-        object.add(pendingName, value);
+        object.add(pendingName, value); //#2
       }
       pendingName = null;
     } else if (stack.isEmpty()) {

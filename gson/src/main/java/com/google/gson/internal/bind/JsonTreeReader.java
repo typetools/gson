@@ -105,6 +105,8 @@ public final class JsonTreeReader extends JsonReader {
     return token != JsonToken.END_OBJECT && token != JsonToken.END_ARRAY;
   }
 
+  /*The if #9 ensures that iterator.hasNext() does not return null #10,
+   * therefore the code is safe*/
   @SuppressWarnings("nullness:argument.type.incompatible")
   @Override public JsonToken peek() throws IOException {
     if (stackSize == 0) {
@@ -115,11 +117,11 @@ public final class JsonTreeReader extends JsonReader {
     if (o instanceof Iterator) {
       boolean isObject = stack[stackSize - 2] instanceof JsonObject;
       Iterator<?> iterator = (Iterator<?>) o;
-      if (iterator.hasNext()) {
+      if (iterator.hasNext()) { //#9
         if (isObject) {
           return JsonToken.NAME;
         } else {
-          push(iterator.next());
+          push(iterator.next()); //#10
           return peek();
         }
       } else {

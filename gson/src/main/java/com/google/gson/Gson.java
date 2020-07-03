@@ -392,7 +392,9 @@ public final class Gson {
       @Override public void write(JsonWriter out, AtomicLong value) throws IOException {
         longAdapter.write(out, value.get());
       }
-      /*Possible defect in Gson code as read(in) #3 may return null*/
+      /*The method is private and the developers ensure to call the below
+       * function with an `in` that returns non null value #3, therefore code
+       * is safe*/
       @SuppressWarnings("dereference.of.nullable")
       @Override public AtomicLong read(JsonReader in) throws IOException {
         Number value = longAdapter.read(in); //#3
